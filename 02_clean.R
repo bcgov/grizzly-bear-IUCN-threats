@@ -10,4 +10,64 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+source("header.R")
+
+#Identify Strata layers - read from disk for analysis
+StrataL <- c('GBPUr','GBPUr_NonHab','GBPUr_BEI_1_2','GBPUr_BEI_1_5','GBPUr_LFormFlat')
+
+# Residential and Commercial Development - Threat 1
+# BTM 'Urban', 'Residential Agriculture Mixtures'
+Residential_1 <-raster(file.path(DataDir,"LandDisturbance/Urban.tif"))
+
+# Agriculture - Threat 2
+# BTM - 'Agriculture', 'Range Lands'; Stats Can - livestock density
+Agriculture_2 <- raster(file.path(DataDir,"LandDisturbance/Agriculture.tif"))
+
+# Energy Production and Mining - Threat 3
+# BTM - 'Mining'
+Energy_3.1 <- raster(file.path(DataDir,"LandDisturbance/OilGasR.tif"))
+Energy_3.2 <- raster(file.path(DataDir,"LandDisturbance/Mining.tif"))
+
+# Transporation & Services Corridors - Threat 4
+
+if (!file.exists(file.path(DataDir,"LandDisturbance/Transport_4.1.tif"))) {
+  # Focal function to caluclate a 1km diameter cirular window radius - 564.9769748m
+  # multiply result by 0.1 to get km/km2 for each cell
+  T1<-Reduce("+",list(RdDensR,TransR, RailR))
+  fw<-focalWeight(raster(res=c(100,100)),565,type='circle')
+  T2 <- focal(T1, w=(fw[fw >0]<-1), fun='sum', na.rm=FALSE, pad=TRUE)
+  #Flag if linear density is > 0.6km/km2
+  Transport_4.1 <- reclassify(T2, c(0,6,0,  6,200,1))
+  writeRaster(Transport_4.1, filename=file.path(DataDir,"LandDisturbance/Transport_4.1.tif"), format="GTiff", overwrite=TRUE)
+  #Note: function to make a circular matrix for focal function, from:
+  #https://scrogster.wordpress.com/2012/10/05/applying-a-circular-moving-window-filter-to-raster-data-in-r/
+  #not required using focalWeight instead
+  } else {
+  Transport_4.1<-raster(file.path(DataDir,"LandDisturbance/Transport_4.1.tif"))
+}
+# could set ice and water to na then use na.rm=TRUE to remove from calucaltion?
+
+# Biological Resource Use - Threat 5
+# CE Mortality overages
+BioUse_5.1 <- raster(file.path(DataDir,"LandDisturbance/Mortr.tif"))
+BioUse_5.3 <- raster(file.path(DataDir,"LandDisturbance/MidSeralr.tif"))
+
+# Human Intrusions - Threat 6
+# CE Front Country Indicator
+HumanIntusion_6 <- raster(file.path(DataDir,"LandDisturbance/FrontCountryr.tif"))
+
+#Make a Threat brick for assessment
+ThreatBrick <- stack(Residential_1,Agriculture_2,Energy_3.1,Energy_3.2,Transport_4.1,BioUse_5.1,BioUse_5.3,HumanIntusion_6)
+
+names(ThreatBrick) <- c('Residential_1','Agriculture_2','Energy_3.1','Energy_3.2','Transport_4.1','BioUse_5.1','BioUse_5.3','HumanIntusion_6')
+
+Threat_file <- file.path("tmp/ThreatBrick")
+saveRDS(ThreatBrick, file = Threat_file)
+
+#Clean up ranking file
+Ranking<-data.frame(GBPU=Ranking_in$GBPU, GBPU_Name=Ranking_in$GBPU_Name,Residential=Ranking_in$Residential,Agriculture=Ranking_in$Agriculture, Energy=Ranking_in$Energy, Transportation=Ranking_in$Transportation, BioUse=Ranking_in$BioUse,HumanIntusion=Ranking_in$HumanIntusion)
+
+
+
+
 
