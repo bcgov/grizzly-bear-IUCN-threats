@@ -48,7 +48,10 @@ if (!file.exists(BTM_file)) {
   NonHab <- BTM[BTM$PRESENT_LAND_USE_LABEL %in% c('Fresh Water','Outside B.C.','Salt Water', 'Glaciers and Snow') ,] %>% 
     fasterize(ProvRast, background=NA)
   
-  AgricultureR <- BTM[BTM$PRESENT_LAND_USE_LABEL %in% c("Agriculture",'Residential Agriculture Mixtures','Range Lands') ,] %>% 
+  AgricultureR <- BTM[BTM$PRESENT_LAND_USE_LABEL %in% c("Agriculture",'Residential Agriculture Mixtures') ,] %>% 
+    fasterize(ProvRast, background=0)
+  
+  RangeR <- BTM[BTM$PRESENT_LAND_USE_LABEL %in% c('Range Lands') ,] %>% 
     fasterize(ProvRast, background=0)
   
   UrbanR <- BTM[BTM$PRESENT_LAND_USE_LABEL %in% c('Urban') ,] %>% 
@@ -61,7 +64,8 @@ if (!file.exists(BTM_file)) {
     fasterize(ProvRast, background=0)
 
   # Write out the BTM layers as individual rasters
-  writeRaster(AgricultureR, filename=file.path(DataDir,"LandDisturbance/Agriculture.tif"), format="GTiff", overwrite=TRUE)
+  writeRaster(AgricultureR, filename=file.path(DataDir,"LandDisturbance/AgricultureR.tif"), format="GTiff", overwrite=TRUE)
+  writeRaster(RangeR, filename=file.path(DataDir,"LandDisturbance/RangeR.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(UrbanR, filename=file.path(DataDir,"LandDisturbance/Urban.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(MiningR, filename=file.path(DataDir,"LandDisturbance/Mining.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(RecR, filename=file.path(DataDir,"LandDisturbance/Rec.tif"), format="GTiff", overwrite=TRUE)
@@ -80,10 +84,14 @@ if (!file.exists(BTM_file)) {
 #Files for linear features
 Linear_file <- file.path("tmp/Linear_Brick")
 if (!file.exists(Linear_file)) {
+  #Linear raster files imported from CE data set into GRASS and rasterized
   OilGasR<-as.integer(raster(file.path(DataDir,"LandDisturbance/OilGasR.tif"), background=0, na.rm=TRUE)>0)
   crs(OilGasR)<-crs(OilGasR)
   TransR<-as.integer(raster(file.path(DataDir,"LandDisturbance/TransR.tif"), background=0, na.rm=TRUE)>0)
   crs(TransR)<-crs(TransR)
+  SeismicR<-as.integer(raster(file.path(DataDir,"SeismicR.tif"), background=0, na.rm=TRUE)>0)
+  crs(SeismicR)<-crs(ProvRast)
+  #Road density rasterized by repo: https://github.com/bcgov/roadless-areas-indicator
   RdDensR<-as.integer(raster(file.path(DataDir,"RoadDensR.tif"), background=0, na.rm=TRUE)>0)
   crs(RdDensR)<-crs(ProvRast)
 # Write out individual layers
@@ -154,11 +162,15 @@ if (!file.exists(GB_file)) {
   # Make a Mid Seral raster - 1 is low
   MidSeralr <- MidSeral[MidSeral$mid_Seral_Num == 1 ,] %>% 
     fasterize(ProvRast, background=0)
+  #Cow density
+  CDR1<-raster(file.path(DataDir,"LandDisturbance/CowDensityR"))
+  CowDensityR<-setValues(raster(CDR1), CDR1[])
   
-  #Write rasters
+#Write rasters
   writeRaster(MidSeralr, filename=file.path(DataDir,"LandDisturbance/MidSeralr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(FrontCountryr, filename=file.path(DataDir,"LandDisturbance/FrontCountryr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(Mortr, filename=file.path(DataDir,"LandDisturbance/Mortr.tif"), format="GTiff", overwrite=TRUE)
+  writeRaster(CowDensityR, filename=file.path(DataDir,"LandDisturbance/CowDensityR.tif"), format="GTiff", overwrite=TRUE)
   
   #Make a raster stack of GB rasters and save to disk - not using due to raster memory allocation bug
   GB_Brick<-brick(Mortr, FrontCountryr, MidSeralr) 
@@ -207,24 +219,25 @@ if (!file.exists(GB_file)) {
   LForm_file <- file.path(dataOutDir,"LForm.tif")
   LFormFlat_file <- file.path(dataOutDir,"LFormFlat.tif")
   if (!file.exists(LForm_file)) {
-    LForm<-raster(file.path(DataDir,"Landform_BCAlbs.tif")) %>%
-           resample(ProvRast, method='ngb')
+    LForm<-mask(raster(file.path(DataDir,"Landform_BCAlbs.tif")) %>%
+           resample(ProvRast, method='ngb'), BCr)
+
     LF_lut<-read_csv(file.path(DataDir,'landform_lut.csv'), col_names=TRUE)
     writeRaster(LForm, filename=file.path(DataDir,"LForm.tif"), format="GTiff", overwrite=TRUE)
     saveRDS(LF_lut, file = 'tmp/LF_lut')
-
-    Landform_BCAlbs
-    raster(file.path(DataDir,"Landform_BCAlbs.tif"))
-    
+ 
     # Pull out just the flat areas - valley bottom (1000) and plains (5000)
     LFormFlat<-LForm
-    LFormFlat[!(LFormFlat[] %in% c(1000,5000,7000))]<-NA
+    LFormFlat[!(LFormFlat[] %in% c(1000,5000,6000,7000,8000))]<-NA
     writeRaster(LFormFlat, filename=file.path(DataDir,"Strata/LFormFlat.tif"), format="GTiff", overwrite=TRUE)
-      } else {
-    #LForm <- raster(file.path(DataDir,"LForm.tif"))
-    #LFormFlat <- raster(file.path(DataDir,"Strata/LFormFlat.tif"))
-    LForm<-readRDS(file='tmp/LForm')
-    LFormFlat<-readRDS(file='tmp/LFormFlat')
+    # Pull out really flat areas - valley bottom (1000) and plains (5000)
+    LFormFlatFlat<-LForm
+    LFormFlatFlat[!(LFormFlatFlat[] %in% c(1000,5000))]<-NA
+    writeRaster(LFormFlatFlat, filename=file.path(DataDir,"Strata/LFormFlatFlat.tif"), format="GTiff", overwrite=TRUE)
+  } else {
+    LForm <- raster(file.path(DataDir,"LForm.tif"))
+    LFormFlat <- raster(file.path(DataDir,"Strata/LFormFlat.tif"))
+    LFormFlatFlat <- raster(file.path(DataDir,"Strata/LFormFlatFlat.tif"))
     LF_lut<- readRDS(file = 'tmp/LF_lut')
   }
   
@@ -233,6 +246,12 @@ if (!file.exists(GB_file)) {
     return(x)
   })
   writeRaster(GBPUr_LFormFlat, filename=file.path(DataDir,"Strata/GBPUr_LFormFlat.tif"), format="GTiff", overwrite=TRUE)
+  
+  GBPUr_LFormFlatFlat <- overlay(GBPUr_NonHab, LFormFlatFlat, fun = function(x, y) {
+    x[is.na(y[])] <- NA
+    return(x)
+  })
+  writeRaster(GBPUr_LFormFlatFlat, filename=file.path(DataDir,"Strata/GBPUr_LFormFlatFlat.tif"), format="GTiff", overwrite=TRUE)
   
   #######
   #Other possible layers - not currently used
@@ -246,15 +265,16 @@ if (!file.exists(GB_file)) {
 } else {
   NonHab<-raster(file.path(DataDir,"NonHab.tif"))
   GBPUr<-raster(file.path(DataDir,"Strata/GBPUr.tif"))
-  GBPUr<-raster(file.path(DataDir,"Strata/GBPUr_NonHab.tif"))
+  GBPUr_NonHab<-raster(file.path(DataDir,"Strata/GBPUr_NonHab.tif"))
   GBPUr_BEI_1_2<-raster(file.path(DataDir,"Strata/GBPUr_BEI_1_2.tif"))
   GBPUr_BEI_1_5<-raster(file.path(DataDir,"Strata/GBPUr_BEI_1_5.tif"))
   GBPUr_LFormFlat<-raster(file.path(DataDir,"Strata/GBPUr_LFormFlat.tif"))
+  GBPUr_LFormFlatFlat<-raster(file.path(DataDir,"Strata/GBPUr_LFormFlatFlat.tif"))
   GB_Brick <- readRDS(file = GB_file)
 }  
 
 #Read in LU csv 
-LU_Summ_in <- data.frame(read.csv(header=TRUE, file=paste(GISdir, "GBear_LU_Summary_scores_v5_20160823.csv", sep=""), sep=",", strip.white=TRUE, ))
+LU_Summ_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/Bears/GBear_LU_Summary_scores_v5_20160823.csv", sep=""), sep=",", strip.white=TRUE, ))
 #Read in assessor based GBPU ranks
 Ranking_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/ProvGBPUs_NatServeMPSimplified.csv", sep=""), sep=",", strip.white=TRUE, ))
 

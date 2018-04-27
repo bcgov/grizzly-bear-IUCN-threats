@@ -10,11 +10,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+source("header.R")
 
 #Calculate %indicator area of total strata area for certain indicators
-IndsPCArea<-c("Area","Residential_1","Agriculture_2","Energy_3.2","Transport_4.1","BioUse_5.1","BioUse_5.3","HumanIntusion_6")
-IndsPCLength<-c("Area","Energy_3.1")
+IndsPCArea<-c("Area","Residential_1","Agriculture_2.1","Agriculture_2.3a","Agriculture_2.3b","Energy_3.2","Transport_4.1","BioUse_5.1","BioUse_5.3","HumanIntusion_6")
+IndsPCLength<-c("Area","Transport_4.2")
 Strata<-c('GRIZZLY_BEAR_POP_UNIT_ID','POPULATION_NAME')
+StrataL <- c('GBPUr','GBPUr_NonHab','GBPUr_BEI_1_2','GBPUr_BEI_1_5','GBPUr_LFormFlat','GBPUr_LFormFlatFlat')
 num<-length(StrataL)
 ThreatL<-list()
 
@@ -50,12 +52,14 @@ for (i in 1:num) {
   ThreatLZR[[StratName]]<-data.frame(GBPU_Name=ThreatLR[[StrataL[i]]]$POPULATION_NAME,
                   Residential_1=ThreatLR[[StrataL[i]]]$Residential_1,
                   Residential=ThreatLR[[StrataL[i]]]$Residential,
-                  Agriculture_2=ThreatLR[[StrataL[i]]]$Agriculture_2,
+                  Agriculture_2=ThreatLR[[StrataL[i]]]$Agriculture_2.1,
+                  Agriculture_2=ThreatLR[[StrataL[i]]]$Agriculture_2.3a,
+                  Agriculture_2=ThreatLR[[StrataL[i]]]$Agriculture_2.3b,
                   Agriculture=ThreatLR[[StrataL[i]]]$Agriculture,
-                  Energy_3.1=ThreatLR[[StrataL[i]]]$Energy_3.1,
                   Energy_3.2=ThreatLR[[StrataL[i]]]$Energy_3.2,
                   Energy=ThreatLR[[StrataL[i]]]$Energy,
                   Transport_4.1=ThreatLR[[StrataL[i]]]$Transport_4.1,
+                  Transport_4.2=ThreatLR[[StrataL[i]]]$Transport_4.2,
                   Transportation=ThreatLR[[StrataL[i]]]$Transportation,
                   BioUse_5.1=ThreatLR[[StrataL[i]]]$BioUse_5.1,
                   BioUse_5.3=ThreatLR[[StrataL[i]]]$BioUse_5.3,
