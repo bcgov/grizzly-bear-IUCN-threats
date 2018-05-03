@@ -28,8 +28,30 @@ Agriculture_2.3b<- raster(file.path(DataDir,"LandDisturbance/CowDensityR.tif"))
 # Energy Production and Mining - Threat 3
 # BTM - 'Mining'
 #Energy_3.1 <- raster(file.path(DataDir,"LandDisturbance/OilGasR.tif"))
-Energy_3.2 <- raster(file.path(DataDir,"LandDisturbance/Mining.tif"))
+#Energy_3.2 <- raster(file.path(DataDir,"LandDisturbance/Mining.tif"))
 
+Energy_3.1<-
+  data.frame(GRIZZLY_BEAR_POP_UNIT_ID=raster::extract(GBPUr, OilGasP)) %>% 
+  group_by(GRIZZLY_BEAR_POP_UNIT_ID) %>% 
+  dplyr::summarize(count=n())
+Energy_3.2<-
+  data.frame(GRIZZLY_BEAR_POP_UNIT_ID=raster::extract(GBPUr, MiningP)) %>% 
+  group_by(GRIZZLY_BEAR_POP_UNIT_ID) %>% 
+  dplyr::summarize(count=n()) 
+Energy_3.3<-
+  data.frame(GRIZZLY_BEAR_POP_UNIT_ID=raster::extract(GBPUr, WindHydroP)) %>% 
+  group_by(GRIZZLY_BEAR_POP_UNIT_ID) %>% 
+  dplyr::summarize(count=n())
+  
+  Energy_3<- merge(Energy_3.1, Energy_3.2, by='GRIZZLY_BEAR_POP_UNIT_ID', all=TRUE) %>%
+  merge(Energy_3.3, by='GRIZZLY_BEAR_POP_UNIT_ID', all=TRUE) %>%
+  merge(GBPU_lut, by='GRIZZLY_BEAR_POP_UNIT_ID', all.y=TRUE) %>%
+  dplyr::select(-POPULATION_NAME)
+  
+  Energy_3[is.na(Energy_3)] <- 0
+  colnames(Energy_3)<-c('GRIZZLY_BEAR_POP_UNIT_ID','Energy_3.1','Energy_3.2','Energy_3.3')
+  saveRDS(Energy_3, file = (file.path(DataDir,'Energy_3')))
+ 
 # Transporation & Services Corridors - Threat 4
 
 if (!file.exists(file.path(DataDir,"LandDisturbance/Transport_4.1.tif"))) {
@@ -64,24 +86,38 @@ if (!file.exists(file.path(DataDir,"LandDisturbance/Transport_4.2.tif"))) {
 
 # Biological Resource Use - Threat 5
 # CE Mortality overages
-BioUse_5.1 <- raster(file.path(DataDir,"LandDisturbance/Mortr.tif"))
-BioUse_5.3 <- raster(file.path(DataDir,"LandDisturbance/MidSeralr.tif"))
+  BioUse_5.1a <- raster(file.path(DataDir,"LandDisturbance/Mortr.tif"))
+  BioUse_5.1b <- raster(file.path(DataDir,"LandDisturbance/HunterDayDr.tif"))
+  BioUse_5.3 <- raster(file.path(DataDir,"LandDisturbance/MidSeralr.tif"))
 
 # Human Intrusions - Threat 6
 # CE Front Country Indicator
-HumanIntusion_6 <- raster(file.path(DataDir,"LandDisturbance/FrontCountryr.tif"))
+HumanIntrusion_6 <- raster(file.path(DataDir,"LandDisturbance/FrontCountryr.tif"))
 
 #Make a Threat brick for assessment
-ThreatBrick <- stack(Residential_1,Agriculture_2.1,Agriculture_2.3a,Agriculture_2.3b,Energy_3.1,Energy_3.2,Transport_4.1,BioUse_5.1,BioUse_5.3,HumanIntusion_6)
+ThreatBrick <- stack(Residential_1,Agriculture_2.1,Agriculture_2.3a,Agriculture_2.3b,Transport_4.1,Transport_4.2,BioUse_5.1a,BioUse_5.1b,BioUse_5.3,HumanIntrusion_6)
 
-names(ThreatBrick) <- c('Residential_1','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Energy_3.2','Transport_4.1','Transport_4.2','BioUse_5.1','BioUse_5.3','HumanIntusion_6')
+names(ThreatBrick) <- c('Residential_1','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Transport_4.1','Transport_4.2','BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6')
 
 Threat_file <- file.path("tmp/ThreatBrick")
 saveRDS(ThreatBrick, file = Threat_file)
 
 #Clean up ranking file
+Ranking_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/ProvGBPUs_NatServeMPSimplified.csv", sep=""), sep=",", strip.white=TRUE, ))
 Ranking<-data.frame(GBPU=Ranking_in$GBPU, GBPU_Name=Ranking_in$GBPU_Name,Residential=Ranking_in$Residential,Agriculture=Ranking_in$Agriculture, Energy=Ranking_in$Energy, Transportation=Ranking_in$Transportation, BioUse=Ranking_in$BioUse,HumanIntusion=Ranking_in$HumanIntusion)
 
+#Merge Ranking_in isolation with calculated isolation for inspection
+Isolation_overal<-
+  data.frame(GBPU_Name=Ranking_in$GBPU_Name, Iso_code=Ranking_in$Iso_code) %>%
+  merge(Isolation_list[[1]], by.x='GBPU_Name', by.y='GBPU')
+
+Isolation_internal<-
+  data.frame(GBPU_Name=Ranking_in$GBPU_Name, Iso_code=Ranking_in$Iso_code) %>%
+  merge(Isolation_list[[2]], by.x='GBPU_Name', by.y='GBPU')
+
+Isolation_external<-
+  data.frame(GBPU_Name=Ranking_in$GBPU_Name, Iso_code=Ranking_in$Iso_code) %>%
+  merge(Isolation_list[[3]], by.x='GBPU_Name', by.y='GBPU')
 
 
 

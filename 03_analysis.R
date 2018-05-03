@@ -19,7 +19,7 @@ setwd('/Users/Morgan/Dropbox (BVRC)/_dev/grizzly-bear-IUCN-threats')
 Threat_file <- file.path("tmp/ThreatBrick")
 ThreatBrick <- readRDS(file = Threat_file)
 
-StrataL <- c('GBPUr','GBPUr_NonHab','GBPUr_BEI_1_2','GBPUr_BEI_1_5','GBPUr_LFormFlat','GBPUr_LFormFlatFlat')
+StrataL <- c('GBPUr','GBPUr_NonHab','GBPUr_BEI_1_2','GBPUr_BEI_1_5','GBPUr_LFormFlat','GBPUr_Forest')
 GBPU_lut<-readRDS(file = 'tmp/GBPU_lut')
 
 num<-length(StrataL)
@@ -33,13 +33,9 @@ for (i in 1:num) {
   ThreatGBPU<-merge(GBPU_lut,ThreatZoneF,by='GRIZZLY_BEAR_POP_UNIT_ID')
   
   ThreatZ1<-zonal(ThreatBrick,GBStrata,'sum', na.rm=TRUE)
-  #TRes<-zonal(Residential_1,GBStrata, 'sum')
-  #TRes2<-zonal(ThreatBrick[[1]],GBStrata, 'sum') - same answer? But not when done as a stack?
   
   ThreatZone<-merge(ThreatGBPU,ThreatZ1,by.x='GRIZZLY_BEAR_POP_UNIT_ID',by.y='zone')
-  #ThreatZone<-merge(ThreatGBPU,TRes2,by.x='GRIZZLY_BEAR_POP_UNIT_ID',by.y='zone')
-  #Merge seems to work properly?
-  
+   
   saveRDS(ThreatZone, file = (file.path(StrataOutDir,StrataL[i])))
 }
 

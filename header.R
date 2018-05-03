@@ -6,6 +6,9 @@ library(raster)
 library(bcmaps)
 library(fasterize)
 library(tidyr)
+library(rio)
+library(WriteXLS)
+
 
 OutDir <- 'out'
 dataOutDir <- file.path(OutDir,'data')

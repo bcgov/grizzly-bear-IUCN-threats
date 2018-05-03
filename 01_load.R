@@ -79,8 +79,23 @@ if (!file.exists(BTM_file)) {
  } else {
    BTM_Brick <- readRDS(file = BTM_file)
    NonHab<-raster(file.path(DataDir,"NonHab.tif"))
-}  
+ }  
 
+#Point layers for development
+#Placer and coal tenures - https://catalogue.data.gov.bc.ca/dataset/mta-mineral-placer-and-coal-tenure-spatial-view
+#Not currently used
+PlacerCoalS <- st_read(file.path(DataDir,'LandDisturbance/MTA_ACQUIRED_TENURE_SVW/MTA_ACQ_TE_polygon.shp'))
+PlacerCoalS <- PlacerCoalS[PlacerCoalS$TNRSBTPDSC %in% c('LEASE','LICENSE') ,]
+
+# Major Projects downloaded from- https://catalogue.data.gov.bc.ca/dataset/major-projects-inventory-economic-points
+MajProjS <- st_read(file.path(DataDir,'LandDisturbance/MPI_ECON_MAJOR_PROJECTS_POINT/MPI_ECON_point.shp'))
+MajProjS <- MajProjS[MajProjS$PRJ_STATUS %in% c('Completed', 'Proposed', 'Construction started') ,]
+
+#Pull points for mining, oil, gas and wind and hydro
+OilGasP <- (as(MajProjS[MajProjS$CNST_STYPE == 'Oil & Gas' ,], 'Spatial'))@coords[,1:2]
+MiningP <- (as(MajProjS[MajProjS$CNST_STYPE == 'Mining' ,], 'Spatial'))@coords[,1:2]
+WindHydroP <- (as(MajProjS[MajProjS$CNST_STYPE == 'Utilities' ,], 'Spatial'))@coords[,1:2]
+ 
 #Files for linear features
 Linear_file <- file.path("tmp/Linear_Brick")
 if (!file.exists(Linear_file)) {
@@ -113,12 +128,14 @@ if (!file.exists(file.path(DataDir,"RailR.tif"))) {
   
 #NE Seismic - from Provincial CE
   if (!file.exists(file.path(DataDir,"SeismicR.tif"))) {
-    SeismicS<-st_read(file.path(DataDir,'LandDisturbance/NE_Seismic/NE_Seismic.shp'))
-    S1 <- rasterize(st_zm(SeismicS[SeismicS$Shape_Leng >0 ,],drop=TRUE),ProvRast, background=0, na.rm=TRUE)
-    S1[S1[]>0]<-1
-    SeismicR<-setValues(raster(S1), S1[])
+    S1<-st_read(file.path(DataDir,'LandDisturbance/NE_Seismic/NE_Seismic.shp'))
+    SeismicL<-st_cast(S1, "LINESTRING", do_split=TRUE)
+    S2 <- rasterize(st_zm(SeismicL[SeismicL$Shape_Leng >0 ,],drop=TRUE),ProvRast, background=0, na.rm=TRUE)
+    S2[S2[]>0]<-1
+    SeismicR<-setValues(raster(S2), S2[])
     writeRaster(SeismicR, filename=file.path(DataDir,"LandDisturbance/SeismicR.tif"), format="GTiff", overwrite=TRUE)
-  } else {
+    
+    } else {
     SeismicR<-as.integer(raster(file.path(DataDir,"LandDisturbance/SeismicR.tif"), background=0, na.rm=TRUE)>0)
     crs(SeismicR)<-crs(SeismicR)
   }  
@@ -162,6 +179,13 @@ if (!file.exists(GB_file)) {
   # Make a Mid Seral raster - 1 is low
   MidSeralr <- MidSeral[MidSeral$mid_Seral_Num == 1 ,] %>% 
     fasterize(ProvRast, background=0)
+  
+  # Hunter Day density per km2 LU_hunterDays_annual_per_km2
+  HunterDayD <- read_sf(GB_gdb, layer = "LU_SUMMARY_poly_v5_20160210")
+  # Make a Hunter Day density raster
+  HunterDayDr <- HunterDayD %>% 
+    fasterize(ProvRast, field='LU_hunterDays_annual_per_km2', background=0)
+  
   #Cow density
   CDR1<-raster(file.path(DataDir,"LandDisturbance/CowDensityR"))
   CowDensityR<-setValues(raster(CDR1), CDR1[])
@@ -169,6 +193,7 @@ if (!file.exists(GB_file)) {
 #Write rasters
   writeRaster(MidSeralr, filename=file.path(DataDir,"LandDisturbance/MidSeralr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(FrontCountryr, filename=file.path(DataDir,"LandDisturbance/FrontCountryr.tif"), format="GTiff", overwrite=TRUE)
+  writeRaster(HunterDayDr, filename=file.path(DataDir,"LandDisturbance/HunterDayDr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(Mortr, filename=file.path(DataDir,"LandDisturbance/Mortr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(CowDensityR, filename=file.path(DataDir,"LandDisturbance/CowDensityR.tif"), format="GTiff", overwrite=TRUE)
   
@@ -253,7 +278,18 @@ if (!file.exists(GB_file)) {
   })
   writeRaster(GBPUr_LFormFlatFlat, filename=file.path(DataDir,"Strata/GBPUr_LFormFlatFlat.tif"), format="GTiff", overwrite=TRUE)
   
-  #######
+  #Read in landcover
+  LandCover<-raster(file.path(DataDir,"LandCover/land_cover_n_age_2017.tif"))
+  LC_lut<-read_csv(file.path(DataDir,'LandCover/LandCover_lut.csv'), col_names=TRUE)
+  Forest<-LandCover
+  Forest[!(Forest[] > 0)]<-NA
+  GBPUr_Forest <- overlay(GBPUr_NonHab, Forest, fun = function(x, y) {
+    x[is.na(y[])] <- NA
+    return(x)
+  })
+  writeRaster(GBPUr_Forest, filename=file.path(DataDir,"Strata/GBPUr_Forest.tif"), format="GTiff", overwrite=TRUE)
+  
+    #######
   #Other possible layers - not currently used
   #GB CE summary data
   GB <- read_sf(GB_gdb, layer = "LU_SUMMARY_poly_v5_20160210")
@@ -270,6 +306,7 @@ if (!file.exists(GB_file)) {
   GBPUr_BEI_1_5<-raster(file.path(DataDir,"Strata/GBPUr_BEI_1_5.tif"))
   GBPUr_LFormFlat<-raster(file.path(DataDir,"Strata/GBPUr_LFormFlat.tif"))
   GBPUr_LFormFlatFlat<-raster(file.path(DataDir,"Strata/GBPUr_LFormFlatFlat.tif"))
+  GBPUr_Forest<-raster(file.path(DataDir,"Strata/GBPUr_Forest.tif"))
   GB_Brick <- readRDS(file = GB_file)
 }  
 
@@ -277,4 +314,6 @@ if (!file.exists(GB_file)) {
 LU_Summ_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/Bears/GBear_LU_Summary_scores_v5_20160823.csv", sep=""), sep=",", strip.white=TRUE, ))
 #Read in assessor based GBPU ranks
 Ranking_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/ProvGBPUs_NatServeMPSimplified.csv", sep=""), sep=",", strip.white=TRUE, ))
+#Read in calculated GBPU isolation tables
+Isolation_list <- import_list(file.path(DataDir,"Isolation/IsolationCalcTables.xlsx"))
 
