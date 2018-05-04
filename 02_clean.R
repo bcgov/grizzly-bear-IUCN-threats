@@ -59,7 +59,10 @@ if (!file.exists(file.path(DataDir,"LandDisturbance/Transport_4.1.tif"))) {
   # multiply result by 0.1 to get km/km2 for each cell
   T1<-Reduce("+",list(RdDensR,RailR))
   fw<-focalWeight(raster(res=c(100,100)),565,type='circle')
-  T2 <- focal(T1, w=as.matrix(fw[fw >0]<-1), fun='sum', na.rm=FALSE, pad=TRUE)
+  #T2 <- focal(T1, w=as.matrix(fw[fw>0]<-1), fun='sum', na.rm=FALSE, pad=TRUE)
+  T2 <- focal(T1, w=fw, fun='sum', na.rm=FALSE, pad=TRUE)
+  writeRaster(T2, filename=file.path(DataDir,"LandDisturbance/T2.tif"), format="GTiff", overwrite=TRUE)
+  
   #Flag if linear density is > 0.6km/km2
   Transport_4.1 <- reclassify(T2, c(0,6,0,  6,200,1))
   writeRaster(Transport_4.1, filename=file.path(DataDir,"LandDisturbance/Transport_4.1.tif"), format="GTiff", overwrite=TRUE)
@@ -104,7 +107,7 @@ saveRDS(ThreatBrick, file = Threat_file)
 
 #Clean up ranking file
 Ranking_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/ProvGBPUs_NatServeMPSimplified.csv", sep=""), sep=",", strip.white=TRUE, ))
-Ranking<-data.frame(GBPU=Ranking_in$GBPU, GBPU_Name=Ranking_in$GBPU_Name,Residential=Ranking_in$Residential,Agriculture=Ranking_in$Agriculture, Energy=Ranking_in$Energy, Transportation=Ranking_in$Transportation, BioUse=Ranking_in$BioUse,HumanIntusion=Ranking_in$HumanIntusion)
+Ranking<-data.frame(GBPU=Ranking_in$GBPU, GBPU_Name=Ranking_in$GBPU_Name,Residential=Ranking_in$Residential,Agriculture=Ranking_in$Agriculture, Energy=Ranking_in$Energy, Transportation=Ranking_in$Transportation, BioUse=Ranking_in$BioUse,HumanIntrusion=Ranking_in$HumanIntrusion)
 
 #Merge Ranking_in isolation with calculated isolation for inspection
 Isolation_overal<-
