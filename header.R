@@ -8,7 +8,7 @@ library(fasterize)
 library(tidyr)
 library(rio)
 library(WriteXLS)
-
+library(readxl)
 
 OutDir <- 'out'
 dataOutDir <- file.path(OutDir,'data')

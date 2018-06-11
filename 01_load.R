@@ -83,7 +83,7 @@ if (!file.exists(BTM_file)) {
 
 #Point layers for development
 #Placer and coal tenures - https://catalogue.data.gov.bc.ca/dataset/mta-mineral-placer-and-coal-tenure-spatial-view
-#Not currently used
+#Not currently used - tenures not nec active - assume if active mining then in major project list
 PlacerCoalS <- st_read(file.path(DataDir,'LandDisturbance/MTA_ACQUIRED_TENURE_SVW/MTA_ACQ_TE_polygon.shp'))
 PlacerCoalS <- PlacerCoalS[PlacerCoalS$TNRSBTPDSC %in% c('LEASE','LICENSE') ,]
 
@@ -104,8 +104,6 @@ if (!file.exists(Linear_file)) {
   crs(OilGasR)<-crs(OilGasR)
   TransR<-as.integer(raster(file.path(DataDir,"LandDisturbance/TransR.tif"), background=0, na.rm=TRUE)>0)
   crs(TransR)<-crs(TransR)
-  SeismicR<-as.integer(raster(file.path(DataDir,"SeismicR.tif"), background=0, na.rm=TRUE)>0)
-  crs(SeismicR)<-crs(ProvRast)
   #Road density rasterized by repo: https://github.com/bcgov/roadless-areas-indicator
   RdDensR<-as.integer(raster(file.path(DataDir,"RoadDensR.tif"), background=0, na.rm=TRUE)>0)
   crs(RdDensR)<-crs(ProvRast)
@@ -143,8 +141,8 @@ if (!file.exists(file.path(DataDir,"RailR.tif"))) {
 #Make a raster brick of linear features - not using due to raster memory allocation bug
 #Linear_Brick <- brick(RdDensR, RailR, SeismicR, OilGasR, TransR)
 #names(BTM_Brick) <- c('RdDensR','RailR','OilGasR','TransR','SeismicR')
-Linear_Brick <- brick(RdDensR, RailR, OilGasR, TransR)
-names(BTM_Brick) <- c('RdDensR','RailR','OilGasR','TransR')
+Linear_Brick <- brick(RdDensR, RailR, OilGasR, TransR, SeismicR)
+names(Linear_Brick) <- c('RdDensR','RailR','OilGasR','TransR','SeismicR')
 saveRDS(Linear_Brick, file = Linear_file)
 } else {
   Linear_Brick<-readRDS(file = Linear_file)
@@ -215,7 +213,7 @@ if (!file.exists(GB_file)) {
   GBPU <- read_sf(GB_gdb, layer = "GBPU_BC_edits_v2_20150601")
   GBPU_lut <- tidyr::replace_na(data.frame(GRIZZLY_BEAR_POP_UNIT_ID=GBPU$GRIZZLY_BEAR_POP_UNIT_ID, POPULATION_NAME=GBPU$POPULATION_NAME, stringsAsFactors = FALSE), list(POPULATION_NAME = 'extirpated'))
   saveRDS(GBPU, file = 'tmp/GBPU')
-  saveRDS(GBPU_lut, file = 'tmp/GBPU_lut')
+  saveRDS(GBPU_lut, file = file.path(DataDir,'GBPU_lut'))
   
   # Make a GBPU raster
   GBPUr <- fasterize(GBPU, ProvRast, field = 'GRIZZLY_BEAR_POP_UNIT_ID', background=NA)
