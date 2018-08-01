@@ -163,8 +163,15 @@ if (!file.exists(GB_file)) {
   #Mortality
   Mort <- read_sf(GB_gdb, layer = "COMBINED_Grizzly_PopMort_Allocation_2004_to_2014")
   # Make a Mortality raster - 1-5 fails - what's the spatial - has had a past mort failure?
-  Mortr <- Mort[Mort$Pop_Mort_TOTAL_AllocationP_Count_v1_allAreas >0 ,] %>% 
+  # CE used hunted units only as failure as it related to policy
+  # Mortr <- Mort[Mort$Pop_Mort_Flag_Hunt == 'Fail' ,] %>% 
+  #  fasterize(ProvRast, background=0)
+  
+  # for status used all mortality 
+  Mortr <- Mort[Mort$Pop_Mort_Flag_v1_allAreas == 'Fail' ,] %>% 
     fasterize(ProvRast, background=0)
+    
+  #data.frame(Flag=Mort$Pop_Mort_Flag_Hunt,AllN=Mort$Pop_Mort_TOTAL_AllocationP_Count_v1_allAreas)
   
   #Front Country
   FrontCountry <- read_sf(GB_gdb, layer = "FrontCountry_v2_Coastal_DC")
@@ -188,12 +195,28 @@ if (!file.exists(GB_file)) {
   CDR1<-raster(file.path(DataDir,"LandDisturbance/CowDensityR"))
   CowDensityR<-setValues(raster(CDR1), CDR1[])
   
+  #Human density
+  HumanDensityR<-raster(file.path(DataDir,'HumanDensity/statscan2011_humandensity_db_km2_net.asc'))
+  
+  # ratio of historic:recent 2005-2014:all years (including recent) - varies but some to 1940s 
+  # measure of annual average kg biomass - note some units have increased from historic
+  # indicator should be updated with published (PSF) data
+  SalmonChange <- read_sf(GB_gdb, layer = "LU_SUMMARY_poly_v5_20160210")
+  # Make a Salmon raster of per cent negative change - ie a -ve number indicates a positive change
+  SalmonChange$SalmonPc<-(SalmonChange$Tot_Salmon_kg_all-SalmonChange$Tot_Salmon_kg_recent)/SalmonChange$Tot_Salmon_kg_all*100
+
+  SalmonChangr <- SalmonChange %>% 
+    fasterize(ProvRast, field='SalmonPc', background=0)
+  
 #Write rasters
   writeRaster(MidSeralr, filename=file.path(DataDir,"LandDisturbance/MidSeralr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(FrontCountryr, filename=file.path(DataDir,"LandDisturbance/FrontCountryr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(HunterDayDr, filename=file.path(DataDir,"LandDisturbance/HunterDayDr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(Mortr, filename=file.path(DataDir,"LandDisturbance/Mortr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(CowDensityR, filename=file.path(DataDir,"LandDisturbance/CowDensityR.tif"), format="GTiff", overwrite=TRUE)
+  writeRaster(HumanDensityR, filename=file.path(DataDir,"HumanDensityR.tif"), format="GTiff", overwrite=TRUE)
+  writeRaster(SalmonChangr, filename=file.path(DataDir,"SalmonChangr.tif"), format="GTiff", overwrite=TRUE)
+  
   
   #Make a raster stack of GB rasters and save to disk - not using due to raster memory allocation bug
   GB_Brick<-brick(Mortr, FrontCountryr, MidSeralr) 
