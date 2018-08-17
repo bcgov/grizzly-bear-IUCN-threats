@@ -1,47 +1,35 @@
-# 
-Data/Maps to assess Grizzly Bear IUCN GBPU threat
-
 <div id="devex-badge"><a rel="Exploration" href="https://github.com/BCDevExchange/assets/blob/master/README.md"><img alt="Being designed and built, but in the lab. May change, disappear, or be buggy." style="border-width:0" src="https://assets.bcdevexchange.org/images/badges/exploration.svg" title="Being designed and built, but in the lab. May change, disappear, or be buggy." /></a></div>
 
-# grizzly-bear-IUCN-threats
+# Grizzly Bear IUCN Threat Assessment
 
-This repository contains R code that summarizes Data/Maps to assess Grizzly Bear IUCN GBPU threat
+This repository contains [R](https://www.r-project.org/) code that summarizes spatial & tabular data to assess Grizzly Bear&mdash;by [Grizzly Bear Population Unit](https://catalogue.data.gov.bc.ca/dataset/caa22f7a-87df-4f31-89e0-d5295ec5c725)&mdash;using the [IUCN threat classification scheme](http://www.iucnredlist.org/technical-documents/classification-schemes/threats-classification-scheme).
 
-### Data
-Land Cover Data:
-This analysis uses the British Columbia [Baseline Thematic Mapping present land use data BTM file] ((https://catalogue.data.gov.bc.ca/dataset/baseline-thematic-mapping-present-land-use-version-1-spatial-layer)) and distributed under the [Access Only - B.C. Crown Copyright](https://www2.gov.bc.ca/gov/content?id=1AAACC9C65754E4D89A118B875E0FBDA) licence.
+## Data
+**Land Cover Data**:
+This analysis uses the British Columbia [Baseline Thematic Mapping present land use data BTM file](https://catalogue.data.gov.bc.ca/dataset/baseline-thematic-mapping-present-land-use-version-1-spatial-layer) distributed under the [Access Only - B.C. Crown Copyright](https://www2.gov.bc.ca/gov/content?id=1AAACC9C65754E4D89A118B875E0FBDA) licence.
   
-Road Data:
-This analysis uses the British Columbia [Digital Road Atlas available from the B.C. Data Catalogue]((https://catalogue.data.gov.bc.ca/dataset/bb060417-b6e6-4548-b837-f9060d94743e)) and distributed under the [Access Only - B.C. Crown Copyright](https://www2.gov.bc.ca/gov/content?id=1AAACC9C65754E4D89A118B875E0FBDA) licence. The Digital Road Atlas is a [single, authoritative source of road data for the Province of B.C.](https://www2.gov.bc.ca/gov/content?id=21FFEC94B0AD40818D2D2AF06D522714) Metadata details for the Digital Road Atlas (DRA) are available in PDF format from the [B.C. Data Catalogue](https://catalogue.data.gov.bc.ca/dataset/bb060417-b6e6-4548-b837-f9060d94743e).
+**Road Data**:
+This analysis uses the British Columbia [Digital Road Atlas available from the B.C. Data Catalogue](https://catalogue.data.gov.bc.ca/dataset/bb060417-b6e6-4548-b837-f9060d94743e) and distributed under the [Access Only - B.C. Crown Copyright](https://www2.gov.bc.ca/gov/content?id=1AAACC9C65754E4D89A118B875E0FBDA) licence. The Digital Road Atlas is the [best available single source of road data for the Province of B.C.](https://www2.gov.bc.ca/gov/content?id=21FFEC94B0AD40818D2D2AF06D522714) Metadata details for the Digital Road Atlas (DRA) are available in PDF format from the [B.C. Data Catalogue](https://catalogue.data.gov.bc.ca/dataset/bb060417-b6e6-4548-b837-f9060d94743e).
 
-The analyses exclude some surface and road types in the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/bb060417-b6e6-4548-b837-f9060d94743e). Boat (B), overgrown (O) & decomissioned (D) roads are excluded from `TRANSPORT_LINE_SURFACE_CODE` and ferry routes (F, FP, FR, RWA), non-motorized trails (T, TD), road proposed (RP), and road pedestrian mall (RPM) are excluded from `TRANSPORT_LINE_TYPE_CODE`.
+The road analysis excludes some surface and road types in the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/bb060417-b6e6-4548-b837-f9060d94743e). Boat (B), overgrown (O) & decomissioned (D) roads are excluded from `TRANSPORT_LINE_SURFACE_CODE` and ferry routes (F, FP, FR, RWA), non-motorized trails (T, TD), road proposed (RP), and road pedestrian mall (RPM) are excluded from `TRANSPORT_LINE_TYPE_CODE`.
 
-The road length analysis sources the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/bb060417-b6e6-4548-b837-f9060d94743e) from the B.C. Data Catalogue. The roadless areas analysis is based on [rasterized input data](https://en.wikipedia.org/wiki/Raster_data), generated with [R](https://www.r-project.org/) code that is also available in [GitHub](https://github.com/bcgov/bc-raster-roads).
+The road analysis is based on [rasterized input data](https://en.wikipedia.org/wiki/Raster_data), generated with [R](https://www.r-project.org/) code that is also available in [GitHub](https://github.com/bcgov/bc-raster-roads).
 
-Cumulative Effects Grizzly Bear Current Condition Data:
-This analysis uses data developed by British Columbia to evaluate indicators of the current condition Grizzly Bear indicators. Data available upon request.
+**Cumulative Effects Grizzly Bear Current Condition Data**:
+This analysis uses data developed by British Columbia to evaluate indicators of Grizzly Bear current condition. Data available upon request.
 
-### Usage
+## Usage
 
-#### Threat Analysis
-
-
-There are four core scripts that are required for the threat analysis, they need to be run in order:
+There are four core scripts that are required for the IUCN threat assessment analysis, they need to be run in order:
 
 -   01\_load.R
 -   02\_clean.R
 -   03\_analysis.R
 -   04\_output.R
 
-An installation of [GDAL](http://www.gdal.org/) is required for the `ogr2ogr` command in the  road_summary.R file. Most packages used in the analyses can be installed from CRAN using `install.packages()`, but you will need to install [`envreportutils`](https://github.com/bcgov/envreportutils) and [`patchwork`](https://github.com/thomasp85/patchwork) using devtools:
+Or you can run all four scripts using run_all.R.
 
-```r
-install.packages("devtools") # if you don't already have it installed
-
-library(devtools)
-install_github("bcgov/envreportutils")
-install_github("thomasp85/patchwork")
-```
+All packages used in the analyses can be installed from CRAN using `install.packages()`.
 
 ## Getting Help or Reporting an Issue
 
@@ -56,7 +44,7 @@ By participating in this project you agree to abide by its terms.
 
 ## Licence
 
-    Copyright 2017 Province of British Columbia
+    Copyright 2018 Province of British Columbia
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
