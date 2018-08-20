@@ -24,7 +24,7 @@ ThreatSummary <- function(DF, Threat_A, Threat_NS) {
     mutate(N_Med = as.integer(DF[[Threat_NS]] == 'Med')) %>% 
     group_by(Decile) %>%
     dplyr::summarise(count=n(), MeanThreat=round(mean(MT),4), Unknown=sum(N_Unknown), Negilible=sum(N_Negligible), Low=sum(N_Low), Med=sum(N_Med))
-    #Adplyr::summarise(MT=mean(), count=n(), Unknown=sum(N_Unknown), Negilible=sum(N_Negligible), Low=sum(N_Low), Med=sum(N_Med))
+  #Adplyr::summarise(MT=mean(), count=n(), Unknown=sum(N_Unknown), Negilible=sum(N_Negligible), Low=sum(N_Low), Med=sum(N_Med))
 }
 
 ThreatAVars <- c('Residential_1','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Agriculture_2all','Energy_3.1','Energy_3.2','Energy_3.3','Transport_4.1','Transport_4.2','Transport_4all','BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6')

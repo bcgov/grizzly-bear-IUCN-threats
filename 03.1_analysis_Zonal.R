@@ -35,7 +35,7 @@ for (i in 1:num) {
   ThreatZ1<-zonal(ThreatBrick,GBStrata,'sum', na.rm=TRUE)
   
   ThreatZone<-merge(ThreatGBPU,ThreatZ1,by.x='GRIZZLY_BEAR_POP_UNIT_ID',by.y='zone')
-   
+  
   saveRDS(ThreatZone, file = (file.path(StrataOutDir,StrataL[i])))
 }
 

@@ -62,7 +62,7 @@ if (!file.exists(BTM_file)) {
   
   RecR <- BTM[BTM$PRESENT_LAND_USE_LABEL %in% c('Recreation Activities') ,] %>% 
     fasterize(ProvRast, background=0)
-
+  
   # Write out the BTM layers as individual rasters
   writeRaster(AgricultureR, filename=file.path(DataDir,"LandDisturbance/AgricultureR.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(RangeR, filename=file.path(DataDir,"LandDisturbance/RangeR.tif"), format="GTiff", overwrite=TRUE)
@@ -76,10 +76,10 @@ if (!file.exists(BTM_file)) {
   names(BTM_Brick) <- c('AgricultureR','UrbanR','MiningR','RecR')
   saveRDS(BTM_Brick, file = BTM_file)
   
- } else {
-   BTM_Brick <- readRDS(file = BTM_file)
-   NonHab<-raster(file.path(DataDir,"NonHab.tif"))
- }  
+} else {
+  BTM_Brick <- readRDS(file = BTM_file)
+  NonHab<-raster(file.path(DataDir,"NonHab.tif"))
+}  
 
 #Point layers for development
 #Placer and coal tenures - https://catalogue.data.gov.bc.ca/dataset/mta-mineral-placer-and-coal-tenure-spatial-view
@@ -95,7 +95,7 @@ MajProjS <- MajProjS[MajProjS$PRJ_STATUS %in% c('Completed', 'Proposed', 'Constr
 OilGasP <- (as(MajProjS[MajProjS$CNST_STYPE == 'Oil & Gas' ,], 'Spatial'))@coords[,1:2]
 MiningP <- (as(MajProjS[MajProjS$CNST_STYPE == 'Mining' ,], 'Spatial'))@coords[,1:2]
 WindHydroP <- (as(MajProjS[MajProjS$CNST_STYPE == 'Utilities' ,], 'Spatial'))@coords[,1:2]
- 
+
 #Files for linear features
 Linear_file <- file.path("tmp/Linear_Brick")
 if (!file.exists(Linear_file)) {
@@ -107,24 +107,24 @@ if (!file.exists(Linear_file)) {
   #Road density rasterized by repo: https://github.com/bcgov/roadless-areas-indicator
   RdDensR<-as.integer(raster(file.path(DataDir,"RoadDensR.tif"), background=0, na.rm=TRUE)>0)
   crs(RdDensR)<-crs(ProvRast)
-# Write out individual layers
+  # Write out individual layers
   writeRaster(RdDensR, filename=file.path(DataDir,"LandDisturbance/RdDensR.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(OilGasR, filename=file.path(DataDir,"LandDisturbance/OilGasR.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(TransR, filename=file.path(DataDir,"LandDisturbance/TransR.tif"), format="GTiff", overwrite=TRUE)
   
-if (!file.exists(file.path(DataDir,"RailR.tif"))) {
+  if (!file.exists(file.path(DataDir,"RailR.tif"))) {
     #Rail downloaded from https://catalogue.data.gov.bc.ca/dataset/railway-track-line
     RailS<-st_read(file.path(DataDir,'LandDisturbance/GBA_RAILWAY_TRACKS_SP/RW_TRACK_line.shp'))
     R1 <- rasterize(st_zm(RailS[RailS$RLWY_TR_ID >0 ,],drop=TRUE),ProvRast, background=0, na.rm=TRUE)
     R1[R1[]>0]<-1
     RailR<-setValues(raster(R1), R1[])
     writeRaster(RailR, filename=file.path(DataDir,"LandDisturbance/RailR.tif"), format="GTiff", overwrite=TRUE)
-} else {
-  RailR<-as.integer(raster(file.path(DataDir,"LandDisturbance/RailR.tif"), background=0, na.rm=TRUE)>0)
-  crs(RailR)<-crs(RailR)
-}  
+  } else {
+    RailR<-as.integer(raster(file.path(DataDir,"LandDisturbance/RailR.tif"), background=0, na.rm=TRUE)>0)
+    crs(RailR)<-crs(RailR)
+  }  
   
-#NE Seismic - from Provincial CE
+  #NE Seismic - from Provincial CE
   if (!file.exists(file.path(DataDir,"SeismicR.tif"))) {
     S1<-st_read(file.path(DataDir,'LandDisturbance/NE_Seismic/NE_Seismic.shp'))
     SeismicL<-st_cast(S1, "LINESTRING", do_split=TRUE)
@@ -133,17 +133,17 @@ if (!file.exists(file.path(DataDir,"RailR.tif"))) {
     SeismicR<-setValues(raster(S2), S2[])
     writeRaster(SeismicR, filename=file.path(DataDir,"LandDisturbance/SeismicR.tif"), format="GTiff", overwrite=TRUE)
     
-    } else {
+  } else {
     SeismicR<-as.integer(raster(file.path(DataDir,"LandDisturbance/SeismicR.tif"), background=0, na.rm=TRUE)>0)
     crs(SeismicR)<-crs(SeismicR)
   }  
   
-#Make a raster brick of linear features - not using due to raster memory allocation bug
-#Linear_Brick <- brick(RdDensR, RailR, SeismicR, OilGasR, TransR)
-#names(BTM_Brick) <- c('RdDensR','RailR','OilGasR','TransR','SeismicR')
-Linear_Brick <- brick(RdDensR, RailR, OilGasR, TransR, SeismicR)
-names(Linear_Brick) <- c('RdDensR','RailR','OilGasR','TransR','SeismicR')
-saveRDS(Linear_Brick, file = Linear_file)
+  #Make a raster brick of linear features - not using due to raster memory allocation bug
+  #Linear_Brick <- brick(RdDensR, RailR, SeismicR, OilGasR, TransR)
+  #names(BTM_Brick) <- c('RdDensR','RailR','OilGasR','TransR','SeismicR')
+  Linear_Brick <- brick(RdDensR, RailR, OilGasR, TransR, SeismicR)
+  names(Linear_Brick) <- c('RdDensR','RailR','OilGasR','TransR','SeismicR')
+  saveRDS(Linear_Brick, file = Linear_file)
 } else {
   Linear_Brick<-readRDS(file = Linear_file)
   RailR<-raster(file.path(DataDir,"LandDisturbance/RailR.tif"))
@@ -170,7 +170,7 @@ if (!file.exists(GB_file)) {
   # for status used all mortality 
   Mortr <- Mort[Mort$Pop_Mort_Flag_v1_allAreas == 'Fail' ,] %>% 
     fasterize(ProvRast, background=0)
-    
+  
   #data.frame(Flag=Mort$Pop_Mort_Flag_Hunt,AllN=Mort$Pop_Mort_TOTAL_AllocationP_Count_v1_allAreas)
   
   #Front Country
@@ -204,11 +204,11 @@ if (!file.exists(GB_file)) {
   SalmonChange <- read_sf(GB_gdb, layer = "LU_SUMMARY_poly_v5_20160210")
   # Make a Salmon raster of per cent negative change - ie a -ve number indicates a positive change
   SalmonChange$SalmonPc<-(SalmonChange$Tot_Salmon_kg_all-SalmonChange$Tot_Salmon_kg_recent)/SalmonChange$Tot_Salmon_kg_all*100
-
+  
   SalmonChangr <- SalmonChange %>% 
     fasterize(ProvRast, field='SalmonPc', background=0)
   
-#Write rasters
+  #Write rasters
   writeRaster(MidSeralr, filename=file.path(DataDir,"LandDisturbance/MidSeralr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(FrontCountryr, filename=file.path(DataDir,"LandDisturbance/FrontCountryr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(HunterDayDr, filename=file.path(DataDir,"LandDisturbance/HunterDayDr.tif"), format="GTiff", overwrite=TRUE)
@@ -266,12 +266,12 @@ if (!file.exists(GB_file)) {
   LFormFlat_file <- file.path(dataOutDir,"LFormFlat.tif")
   if (!file.exists(LForm_file)) {
     LForm<-mask(raster(file.path(DataDir,"Landform_BCAlbs.tif")) %>%
-           resample(ProvRast, method='ngb'), BCr)
-
+                  resample(ProvRast, method='ngb'), BCr)
+    
     LF_lut<-read_csv(file.path(DataDir,'landform_lut.csv'), col_names=TRUE)
     writeRaster(LForm, filename=file.path(DataDir,"LForm.tif"), format="GTiff", overwrite=TRUE)
     saveRDS(LF_lut, file = 'tmp/LF_lut')
- 
+    
     # Pull out just the flat areas - valley bottom (1000) and plains (5000)
     LFormFlat<-LForm
     LFormFlat[!(LFormFlat[] %in% c(1000,5000,6000,7000,8000))]<-NA
@@ -310,7 +310,7 @@ if (!file.exists(GB_file)) {
   })
   writeRaster(GBPUr_Forest, filename=file.path(DataDir,"Strata/GBPUr_Forest.tif"), format="GTiff", overwrite=TRUE)
   
-    #######
+  #######
   #Other possible layers - not currently used
   #GB CE summary data
   GB <- read_sf(GB_gdb, layer = "LU_SUMMARY_poly_v5_20160210")

@@ -49,7 +49,7 @@ for (i in 1:nTvars) {
   ThreatV<-paste(ThreatAVars[i],sep='')#ThreatVar
   ThreatThreshold[[i]]<-ThreatThresholdFn(ThreatI, ThreatC, ThreatV)
   ThreatMax[[i]]<-ThreatMaxFn(ThreatI, ThreatC, ThreatV)
-  }
+}
 
 WriteXLS(ThreatThreshold, file.path(dataOutDir,paste('GBThreatThresholds.xls',sep='')),SheetNames=ThreatAVars)
 

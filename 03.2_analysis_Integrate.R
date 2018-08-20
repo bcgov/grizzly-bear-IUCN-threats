@@ -42,7 +42,7 @@ for (i in 1:num) {
   # rank linear indicators
   GBLR<-data.frame(lapply(GBlistL, function(x) rank(x, ties.method='random')))
   colnames(GBLR)<-lapply(IndsPCLength, function(x) paste(x, 'Rank',sep=''))
- 
+  
   # Density indicators expressed as #/ha in Strata
   GBlistD<-ThreatZone[ , (names(ThreatZone) %in% IndsDensity)]
   GBD<-data.frame(lapply(GBlistD, function(x) round((x)/GBlistD$Area,4)))#density summed to area of zone/area of unit to get density per/km2
