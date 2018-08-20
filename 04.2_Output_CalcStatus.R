@@ -36,23 +36,23 @@ IsoPopAdj_LUT<-data.frame(PopIso=c('AA','AB','AC','AD','BA','BB','BC','BD','CA',
                           PopIsoAdj=c(-4,-4,-4,-3,  -4,-1.5,-1,-0.5,  -4,-1.5,-1,0,  -3,-1,-0.5,0,  -2,-1,-0.5,0))
 
 Rank_LUT<-data.frame(Rank=c('1','1.5','2','2.5','3','3.5','4','4.5','5'),
-                      RankCode=c('M1','M1M2','M2','M2M3','M3','M3M4','M4','M4M5','M5'))
+                     RankCode=c('M1','M1M2','M2','M2M3','M3','M3M4','M4','M4M5','M5'))
 
 #Create a new table and populate the population codes, isolation codes, 
 #combined population-isolation code, and rank score code
 Threat_2<-
- Ranking %>%
+  Ranking %>%
   left_join(Threat_O, by='GBPU_Name') %>%
   mutate(PopCode = ifelse(Adults<10 , 'A', 
-             ifelse(Adults<50, 'B',
-             ifelse(Adults<100, 'C', 
-             ifelse(Adults<250, 'D', 'E'))))) %>% 
+                          ifelse(Adults<50, 'B',
+                                 ifelse(Adults<100, 'C', 
+                                        ifelse(Adults<250, 'D', 'E'))))) %>% 
   left_join(Iso_LUT, by='Iso') %>%
   mutate(PopIso = paste(PopCode, IsoCode, sep=''))  %>%
   left_join(IsoPopAdj_LUT, by='PopIso') %>%
   mutate(Rank=as.character(
     ifelse((5+PopIsoAdj+TrendAdj+ThreatAdj)<=0, 1, (5+PopIsoAdj+TrendAdj+ThreatAdj))
-    )) %>%
+  )) %>%
   left_join(Rank_LUT, by='Rank')  %>%
   left_join(ThreatSummaryL, by='GBPU_Name')
 
