@@ -191,12 +191,9 @@ if (!file.exists(GB_file)) {
   HunterDayDr <- HunterDayD %>% 
     fasterize(ProvRast, field='LU_hunterDays_annual_per_km2', background=0)
   
-  #Cow density
-  CDR1<-raster(file.path(DataDir,"LandDisturbance/CowDensityR"))
-  CowDensityR<-setValues(raster(CDR1), CDR1[])
-  
-  #Human density
-  HumanDensityR<-raster(file.path(DataDir,'HumanDensity/statscan2011_humandensity_db_km2_net.asc'))
+  #Cow density - see 0.1.Load_Livestock.R
+   
+  #Human density - see 01.Load_Human.R
   
   # ratio of historic:recent 2005-2014:all years (including recent) - varies but some to 1940s 
   # measure of annual average kg biomass - note some units have increased from historic
@@ -213,8 +210,6 @@ if (!file.exists(GB_file)) {
   writeRaster(FrontCountryr, filename=file.path(DataDir,"LandDisturbance/FrontCountryr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(HunterDayDr, filename=file.path(DataDir,"LandDisturbance/HunterDayDr.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(Mortr, filename=file.path(DataDir,"LandDisturbance/Mortr.tif"), format="GTiff", overwrite=TRUE)
-  writeRaster(CowDensityR, filename=file.path(DataDir,"LandDisturbance/CowDensityR.tif"), format="GTiff", overwrite=TRUE)
-  writeRaster(HumanDensityR, filename=file.path(DataDir,"HumanDensityR.tif"), format="GTiff", overwrite=TRUE)
   writeRaster(SalmonChangr, filename=file.path(DataDir,"SalmonChangr.tif"), format="GTiff", overwrite=TRUE)
   
   
@@ -335,6 +330,7 @@ if (!file.exists(GB_file)) {
 LU_Summ_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/Bears/GBear_LU_Summary_scores_v5_20160823.csv", sep=""), sep=",", strip.white=TRUE, ))
 #Read in assessor based GBPU ranks
 Ranking_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/ProvGBPUs_NatServeMPSimplified.csv", sep=""), sep=",", strip.white=TRUE, ))
+Ranking_inSept <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/NS_GBPU_RANKS_MP_NEW_OCT_2018.csv", sep=""), sep=",", strip.white=TRUE, ))
 #Read in calculated GBPU isolation tables
 Isolation_list <- import_list(file.path(DataDir,"Isolation/IsolationCalcTables.xlsx"))
 

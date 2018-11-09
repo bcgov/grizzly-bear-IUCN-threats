@@ -22,6 +22,8 @@ library(tidyr)
 library(rio)
 library(WriteXLS)
 library(readxl)
+library(rgdal)
+library(RColorBrewer)
 
 OutDir <- 'out'
 dataOutDir <- file.path(OutDir,'data')

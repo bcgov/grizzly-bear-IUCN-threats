@@ -135,7 +135,8 @@ colnames(Threat_O)<-c('GBPU_Name',ThreatLevelsNames)
 
 #Cacluate overall threat
 Threat_LUT<-data.frame(Threat_Class = c('Null','Low','Medium','High','VHigh'),
-                       ThreatAdj = c(0,0,-1,-1,-2))
+                       #ThreatAdj = c(0,0,-1,-1,-2))
+                        ThreatAdj = c(0,0,-1,-1.5,-2))# High category bumped to -1.5 see Proctor email Oct 10 2018
 Threat_O<-Threat_O %>%
   mutate(Threat_Class = ifelse((Low>0 & Low<4), 'Low', 
                                ifelse(((Low>3 & Medium==0) | (High==0 & Medium==1 & Low<3)), 'Medium',

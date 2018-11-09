@@ -25,7 +25,7 @@ Residential_1b <-raster(file.path(DataDir,"HumanDensityR.tif"))
 # BTM - 'Agriculture', 'Residential Agriculture Mixtures', 'Range Lands'; Stats Can - livestock density
 Agriculture_2.1 <- raster(file.path(DataDir,"LandDisturbance/AgricultureR.tif"))
 Agriculture_2.3a <- raster(file.path(DataDir,"LandDisturbance/RangeR.tif"))
-Agriculture_2.3b<- raster(file.path(DataDir,"LandDisturbance/CowDensityR.tif"))
+Agriculture_2.3b<- raster(file.path(DataDir,"LandDisturbance/LSDensityR.tif"))
 
 if (!file.exists(file.path(DataDir,"LandDisturbance/Agriculture_2all.tif"))) {
   Agriculture_2all<- Agriculture_2.1+Agriculture_2.3a
@@ -154,6 +154,8 @@ saveRDS(ThreatBrick, file = Threat_file)
 #Clean up ranking file
 Ranking_full <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/ProvGBPUs_NatServeMPSimplified.csv", sep=""), sep=",", strip.white=TRUE, ))
 saveRDS(Ranking_full, file=file.path(DataDir,'Ranking_full'))
+Ranking_fullSept <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/NS_GBPU_RANKS_MP_NEW_OCT_2018.csv", sep=""), sep=",", strip.white=TRUE, ))
+saveRDS(Ranking_fullSept, file=file.path(DataDir,'Ranking_fullSept'))
 Ranking<-data.frame(GBPU=Ranking_full$GBPU, GBPU_Name=Ranking_full$GBPU_Name,Residential=Ranking_full$Residential,Agriculture=Ranking_full$Agriculture, Energy=Ranking_full$Energy, Transportation=Ranking_full$Transportation, BioUse=Ranking_full$BioUse,HumanIntrusion=Ranking_full$HumanIntrusion,ClimateChange=Ranking_full$ClimateChange)
 saveRDS(Ranking, file=file.path(DataDir,'Ranking'))
 

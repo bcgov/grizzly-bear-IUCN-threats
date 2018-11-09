@@ -20,13 +20,14 @@ ThreatNSVars <- c('Residential','Residential','Agriculture','Agriculture','Agric
 Threat_O <- data.frame(read_excel(path=file.path(dataOutDir,paste('Threat_O.xls',sep=''))))
 Ranking<-readRDS(file=file.path(DataDir,'Ranking'))
 Ranking_full<-readRDS(file=file.path(DataDir,'Ranking_full'))
+Ranking_fullSept<-readRDS(file=file.path(DataDir,'Ranking_fullSept'))
 
 ThreatSummaryL<-data.frame(read_excel(path=file.path(dataOutDir,paste('ThreatCalcSummary.xls',sep=''))))
 
-Ranking<-data.frame(GBPU_Name=Ranking_full$GBPU_Name,
-                    Adults=Ranking_full$Adults, Iso=Ranking_full$IsoRange, TrendAdj=Ranking_full$TrendAdjust,OrigRanking=Ranking_full$FinalRANK,
-                    Residential=Ranking_full$Residential,Agriculture=Ranking_full$Agriculture, Energy=Ranking_full$Energy, 
-                    Transportation=Ranking_full$Transportation, BioUse=Ranking_full$BioUse,HumanIntrusion=Ranking_full$HumanIntrusion,ClimateChange=Ranking_full$ClimateChange)
+Ranking<-data.frame(GBPU_Name=Ranking_fullSept$GBPU_Name,
+                    Adults=Ranking_fullSept$Adults, Iso=Ranking_fullSept$Iso, TrendAdj=Ranking_fullSept$TrendAdjNEW,OrigRanking=Ranking_fullSept$OrigRanking,
+                    Residential=Ranking_fullSept$Residential,Agriculture=Ranking_fullSept$Agriculture, Energy=Ranking_fullSept$Energy, 
+                    Transportation=Ranking_fullSept$Transportation, BioUse=Ranking_fullSept$BioUse,HumanIntrusion=Ranking_fullSept$HumanIntrusion,ClimateChange=Ranking_full$ClimateChange)
 
 Iso_LUT<-data.frame(IsoCode = c('D','C','B','A'),
                     Iso = c('<25','25-66','66-90','>90'))

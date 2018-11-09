@@ -71,17 +71,18 @@ DF1$Quant1.x<-ifelse((DF1$Quant1.x ==0| is.na(DF1$Quant1.x) ), 0.01, DF1$Quant1.
 ThreatBenchI<-data.frame(Threat=DF1$Threat, LowIn=DF1$Quant1.x, MedIn=DF1$Quant1.y, UnknownIn=DF1$Quant1)
 
 #Fix Threat 3 - it is a count and typically few resulting in a 0 - assign to 1
-ThreatBenchI$Low[ThreatBenchI$Threat=='Energy_3all']<-1
+ThreatBenchI$LowIn[ThreatBenchI$Threat=='Energy_3all']<-1
 #Add column of the benchmarks used Provincially for the Cumulative Effects current condition assessment
+#add a 1.2 for roads as a medium threat
 #Mortality - some units have <1% area flagged likely slivers so using CE criteria flag a GBPU if >1% is flagged - could be a single LU in a small number of cases
-#Mortality update - flag if >50% of GBPU has mortality issues to temper the rating - need to check
+#Mortality update - flag if >50% of GBPU has mortality issues to temper the rating - check with Bear Team, flag 100% as medium
 #Climate change - set at 25% or more -ve change in salmon biomas then flagged
 CE_Bench<-data.frame(Threat=c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b',
                               'Agriculture_2all','Energy_3.1','Energy_3.2','Energy_3.3','Energy_3all',
                               'Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1a',
                               'BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11'),
                      CE_BenchmarkL=c(0,0,0,0,0,0,0,0,0,0,0.6,0,0,0.6,0,50,1.508812,30,20,25),
-                     CE_BenchmarkM=c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
+                     CE_BenchmarkM=c(0,0,0,0,0,0,0,0,0,0,1.2,0,0,1.2,0,0,0,0,0,0))
 
 ThreatBenchI<-left_join(ThreatBenchI,CE_Bench, by='Threat')
 #Modify ThreatBench and use CE_Benchmarks where they are available
