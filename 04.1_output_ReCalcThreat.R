@@ -17,9 +17,8 @@
 
 source("header.R")
 
-ThreatAVars <- c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Agriculture_2all','Energy_3.1','Energy_3.2','Energy_3.3','Energy_3all','Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11')
-ThreatNSVars <- c('Residential','Residential','Agriculture','Agriculture','Agriculture','Agriculture','Energy','Energy','Energy','Energy','Transportation','Transportation','Transportation','Transportation','Transportation','BioUse','BioUse','BioUse','HumanIntrusion','ClimateChange')
-
+ThreatAVars <- c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Energy_3.1','Energy_3.2','Energy_3.3','Energy_3all','Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11')
+ThreatNSVars <- c('Residential','Residential','Agriculture','Agriculture','Agriculture','Energy','Energy','Energy','Energy','Transportation','Transportation','Transportation','Transportation','Transportation','BioUse','BioUse','BioUse','HumanIntrusion','ClimateChange')
 #######
 # Using numerically derived benchmarks re-calculate the Threats for each GBPU
 ThreatBench <- data.frame(read_excel(path=file.path(dataOutDir,paste('ThreatBench.xls',sep=''))))
@@ -30,7 +29,7 @@ ThreatAssignFn <- function(DF, ThreatVal, ThreatCalc) {
     mutate(ReCalc = (DF[[ThreatVal]] >= ThreatCalc))
 }
 
-nThreatLevels<-2 #only Low and Medium
+nThreatLevels<-3 #only Low, Medium, High
 ThreatLevelsNames<-c('Low','Medium', 'High', 'VHigh')
 nTvars<-length(ThreatAVars)# number of threats
 
@@ -51,6 +50,7 @@ for (j in 1:nThreatLevels) {
   DFin<-data.frame(do.call(cbind, ThreatReCalc))
   cols <- sapply(DFin, is.logical)
   DFin[,cols] <- lapply(DFin[,cols], as.numeric)
+  
   # set NA to 0
   DFin[is.na(DFin)] <- 0
   #bind GBPU names to data.frame and assign threat name to column
@@ -72,7 +72,7 @@ for (j in 1:nThreatLevels) {
     dplyr::rename(Threat_4 = Transport_4.1_calc) %>%
     dplyr::rename(Threat_6 = HumanIntrusion_6_calc) %>%
     dplyr::rename(Threat_11 = ClimateChange_11_calc) %>%
-    dplyr::select(GBPU_Name,starts_with('Threat'))
+    dplyr::select(GBPU_Name, starts_with('Threat'))
   
   Threat_1$numT<-rowSums(Threat_1[2:7])
   
@@ -81,38 +81,66 @@ for (j in 1:nThreatLevels) {
 names(ThreatLevels) <- ThreatLevelsNames[1:nThreatLevels]
 
 #Generate a threat table showing threat by GBPU
-ThreatAdd<-ThreatLevels[['Low']][2:8]+ThreatLevels[['Medium']][2:8]
-
+ThreatAdd<-ThreatLevels[['Low']][2:8]+ThreatLevels[['Medium']][2:8]+ThreatLevels[['High']][2:8]
 
 ThreatSummaryL <- ThreatAdd %>%
   mutate(GBPU_Name = ThreatLevels$Low$GBPU_Name) %>%
   mutate(ResidentialCalc = ifelse(Threat_1==0, 'Negligible', 
                                   ifelse(Threat_1==1, 'Low',
-                                         ifelse(Threat_1==2, 'Medium','Unknown')))) %>%
+                                         ifelse(Threat_1==2, 'Medium',
+                                                ifelse(Threat_1==3, 'High',
+                                                       'Unknown'))))) %>%
   mutate(AgricultureCalc = ifelse(Threat_2==0, 'Negligible', 
                                   ifelse(Threat_2==1, 'Low',
-                                         ifelse(Threat_2==2, 'Medium','Unknown')))) %>%
+                                         ifelse(Threat_2==2, 'Medium',
+                                                ifelse(Threat_2==3, 'High',
+                                                       'Unknown'))))) %>%
   mutate(EnergyCalc = ifelse(Threat_3==0, 'Negligible', 
                              ifelse(Threat_3==1, 'Low',
-                                    ifelse(Threat_3==2, 'Medium','Unknown')))) %>%
+                                    ifelse(Threat_3==2, 'Medium',
+                                           ifelse(Threat_3==3, 'High',
+                                                  'Unknown'))))) %>%
   mutate(TransportationCalc = ifelse(Threat_4==0, 'Negligible', 
                                      ifelse(Threat_4==1, 'Low',
-                                            ifelse(Threat_4==2, 'Medium','Unknown')))) %>%
+                                            ifelse(Threat_4==2, 'Medium',
+                                                   ifelse(Threat_4==3, 'High',
+                                                          'Unknown'))))) %>%
   mutate(BioUseCalc = ifelse(Threat_5==0, 'Negligible', 
                              ifelse(Threat_5==1, 'Low',
-                                    ifelse(Threat_5==2, 'Medium','Unknown')))) %>%
+                                    ifelse(Threat_5==2, 'Medium',
+                                           ifelse(Threat_5==3, 'High',
+                                                  'Unknown'))))) %>%
   mutate(HumanIntrusionCalc = ifelse(Threat_6==0, 'Negligible', 
                                      ifelse(Threat_6==1, 'Low',
-                                            ifelse(Threat_6==2, 'Medium','Unknown')))) %>%
+                                            ifelse(Threat_6==2, 'Medium',
+                                                   ifelse(Threat_6==3, 'High',
+                                                          'Unknown'))))) %>%
   mutate(ClimateChangeCalc = ifelse(Threat_11==0, 'Negligible', 
                                     ifelse(Threat_11==1, 'Low',
-                                           ifelse(Threat_11==2, 'Medium','Unknown')))) %>%
-  dplyr::select(GBPU_Name,ends_with('Calc'))
+                                           ifelse(Threat_11==2, 'Medium',
+                                                  ifelse(Threat_11==3, 'High',
+                                                         'Unknown'))))) %>%
+  dplyr::select(GBPU_Name, ends_with('Calc'))
 
 WriteXLS(ThreatSummaryL, file.path(dataOutDir,paste('ThreatCalcSummary.xls',sep='')))
 
-#Adjust lower threat levels to 0 if registering a higher level (med) threat so calculator works
-ThreatLevels[[1]]<-data.frame(GBPU_Name=ThreatLevels[[1]][1], (abs(ThreatLevels[[2]][2:8]-1)*ThreatLevels[[1]][2:8]),ThreatLevels[[1]][9])
+# Adjust lower threat levels to 0 if registering a higher level threat so calculator works and  
+# recalculate the number of occurences of that threat level for each GBPU
+# Low
+ThreatLevels[[1]]<-data.frame(GBPU_Name=ThreatLevels[[1]][1], 
+                              (abs(ThreatLevels[[2]][2:8]-1)*ThreatLevels[[1]][2:8]))#,numT=rowSums(ThreatLevels[[1]][2:8]))
+
+# Med
+ThreatLevels[[2]]<-data.frame(GBPU_Name=ThreatLevels[[2]][1], 
+                              (abs(ThreatLevels[[3]][2:8]-1)*ThreatLevels[[2]][2:8]))#,numT=rowSums(ThreatLevels[[2]][2:8]))
+
+# High
+ThreatLevels[[3]]<-data.frame(GBPU_Name=ThreatLevels[[3]][1], 
+                              (ThreatLevels[[3]][2:8]))#,numT=rowSums(ThreatLevels[[3]][2:8]))
+
+ThreatLevels[[1]]$numT=rowSums(ThreatLevels[[1]][2:8])
+ThreatLevels[[2]]$numT=rowSums(ThreatLevels[[2]][2:8])
+ThreatLevels[[3]]$numT=rowSums(ThreatLevels[[3]][2:8])
 
 #Write out ThreatLevels to inspect
 WriteXLS(ThreatLevels, file.path(dataOutDir,paste('GBThreatLevels.xls',sep='')),SheetNames=names(ThreatLevels))
@@ -134,14 +162,22 @@ Threat_O<-cbind(GBPU_Name=ThreatLevels[[1]]$GBPU_Name, Threat_O, BlankT)
 colnames(Threat_O)<-c('GBPU_Name',ThreatLevelsNames)
 
 #Cacluate overall threat
-Threat_LUT<-data.frame(Threat_Class = c('Null','Low','Medium','High','VHigh'),
+
+Threat_LUT<-data.frame(Threat_Class = c('Negligible','Low','Medium','High','VHigh'),
                        #ThreatAdj = c(0,0,-1,-1,-2))
                         ThreatAdj = c(0,0,-1,-1.5,-2))# High category bumped to -1.5 see Proctor email Oct 10 2018
-Threat_O<-Threat_O %>%
-  mutate(Threat_Class = ifelse((Low>0 & Low<4), 'Low', 
-                               ifelse(((Low>3 & Medium==0) | (High==0 & Medium==1 & Low<3)), 'Medium',
-                                      ifelse(((High==1) | (High==0 & Medium>2) | (High==0 & Medium==2 & Low>1 ) | (High==0 & Medium==1 & Low>2)), 'High',
-                                             ifelse((VHigh>0 | High>1 | (High==1 & Medium>1)),'VHigh','Null'))))) %>%
+
+Threat_O <- Threat_O %>%
+  mutate(Threat_Class =
+           case_when(
+             Low>0 & Low<4 & Medium==0 & High==0 ~ 'Low',
+             (Low>3 & Medium==0 & High==0) | (Low<=3 & Medium==1 & High==0 ) ~ 'Medium',
+             (Low>=0 & Medium<2 & High==1 ) | (Low>=0 & Medium>2 & High==0) | (Low>=2 & Medium==2 & High==0) |
+             (Low>2 & Medium==1 & High==0)  ~ 'High',
+             (Low>=0 & Medium>=0 & High>1) | (Low>=0 & Medium>1 & High==1) ~ 'VHigh',
+             Low==0 & Medium==0 & High==0 ~ 'Negligible'
+           )) %>%
   left_join(Threat_LUT, by='Threat_Class')
+
 
 WriteXLS(Threat_O, file.path(dataOutDir,paste('Threat_O.xls',sep='')))

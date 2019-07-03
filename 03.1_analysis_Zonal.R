@@ -13,6 +13,7 @@
 ## Copy and run in R outside of R studio - R studio has a memory allocation bug running zonal and freq
 DataDir <- 'data'
 StrataOutDir<-'out/data/Strata'
+StrataDir<-'../GB_Data/out/Strata'
 library(raster)
 setwd('/Users/Morgan/Dropbox (BVRC)/_dev/grizzly-bear-IUCN-threats')
 
@@ -26,7 +27,7 @@ num<-length(StrataL)
 i<-1
 for (i in 1:num) {
   # Originally strata was in a brick, but freq and zonal had memory issues
-  GBStrata<-raster(file.path(DataDir,'Strata',paste(StrataL[i], ".tif", sep="")))
+  GBStrata<-raster(file.path(StrataDir,paste(StrataL[i], ".tif", sep="")))
   
   ThreatZoneF<-freq(GBStrata, parellel=FALSE)
   colnames(ThreatZoneF)<-c('GRIZZLY_BEAR_POP_UNIT_ID','Area')
@@ -34,8 +35,18 @@ for (i in 1:num) {
   
   ThreatZ1<-zonal(ThreatBrick,GBStrata,'sum', na.rm=TRUE)
   
-  ThreatZone<-merge(ThreatGBPU,ThreatZ1,by.x='GRIZZLY_BEAR_POP_UNIT_ID',by.y='zone')
+  # Fails on Stack so pull each threat out and generate a list
+  #ThreatL<-list()
+  #nThreats<-length(names(ThreatBrick))
+  #for (j in 1:nThreats) {
+  #  Threat<-ThreatBrick[[j]]
+  #  ThreatL[[j]]<-zonal(Threat,GBStrata,'sum', na.rm=TRUE)
+  #  Tname<-names(ThreatBrick)[j]
+  #  colnames(ThreatL[[j]])<-c('GRIZZLY_BEAR_POP_UNIT_ID',Tname)
+  #}
+  #ThreatZ1<-ThreatL
   
+  ThreatZone<-merge(ThreatGBPU,ThreatZ1,by.x='GRIZZLY_BEAR_POP_UNIT_ID',by.y='zone')
   saveRDS(ThreatZone, file = (file.path(StrataOutDir,StrataL[i])))
 }
 

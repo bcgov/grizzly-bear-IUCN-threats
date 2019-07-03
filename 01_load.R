@@ -37,6 +37,7 @@ UrbanR <- raster(file.path(GBspatialDir,"UrbanR.tif"))
 MiningR <- raster(file.path(GBspatialDir,"MiningR.tif"))
 RecR <- raster(file.path(GBspatialDir,"RecR.tif"))
 
+BTM_file <- file.path("tmp/BTM_Brick")
 BTM_Brick<- brick(AgricultureR, RangeR, UrbanR, MiningR, RecR)
 names(BTM_Brick) <- c('AgricultureR','RangeR','UrbanR','MiningR','RecR')
 saveRDS(BTM_Brick, file = BTM_file)
@@ -51,7 +52,7 @@ SecureR<-raster(file.path(GBspatialDir,"SecureR.tif"))
 FrontCountryR<-raster(file.path(GBspatialDir,"FrontCountryR.tif"))
 
 #Road Density
-RdDensR<-raster(file.path(GBspatialDir,"RdDens.tif"))
+RdDensR<-raster(file.path(GBRdDir,"RoadDensR.tif"))
 
 #Salmon Change
 SalmonChangeR<-raster(file.path(GBspatialDir,"SalmonChangeR.tif"))
@@ -69,9 +70,10 @@ HuntDDensNonHabR<-raster(file.path(HunterSpatialDir,"HuntDDensNonHabR.tif"))
 HumanDensityR<-raster(file.path(HumanLivestockSpatialDir,"HumanDensityR.tif"))
 LivestockDensityR<-raster(file.path(HumanLivestockSpatialDir,"LSDensityR.tif"))
 
-#Mortlaity - see GB_unreported
+#Mortlaity - see GB_unreported - BioUse_5.1a
 # from GB_Mortality repo: https://github.com/bcgov/GB_Mortality
-MortR<-raster(file.path(MortSpatialDir,"MortR.tif"))
+#FemaleUnk_Report_pop<- data.frame(read_xls(file.path(MortDataDir,paste('FemaleUnk_Report_pop.xls',sep=''))))
+FemaleUnk_Report_pop<- data.frame(read_xls(file.path(MortDataDir,paste('MortalityThreat_WMU_to_GBPU.xls',sep=''))))
 
 #Point layers for development
 #Placer and coal tenures - https://catalogue.data.gov.bc.ca/dataset/mta-mineral-placer-and-coal-tenure-spatial-view
@@ -97,7 +99,11 @@ if (!file.exists(Linear_file)) {
   TransR<-as.integer(raster(file.path(DataDir,"LandDisturbance/TransR.tif"), background=0, na.rm=TRUE)>0)
   crs(TransR)<-crs(TransR)
   #Road density rasterized by repo: https://github.com/bcgov/roadless-areas-indicator
-  RdDensR<-as.integer(raster(file.path(DataDir,"RoadDensR.tif"), background=0, na.rm=TRUE)>0)
+  #Only uses DRA
+  #RdDensR<-as.integer(raster(file.path(DataDir,"RoadDensR.tif"), background=0, na.rm=TRUE)>0)
+  #Use CE 2017 roads - includes DRA, FTEN, and RESULTS roads - being updated 2019
+  
+  
   crs(RdDensR)<-crs(ProvRast)
   # Write out individual layers
   writeRaster(RdDensR, filename=file.path(DataDir,"LandDisturbance/RdDensR.tif"), format="GTiff", overwrite=TRUE)
@@ -138,11 +144,11 @@ if (!file.exists(Linear_file)) {
   saveRDS(Linear_Brick, file = Linear_file)
 } else {
   Linear_Brick<-readRDS(file = Linear_file)
-  RailR<-raster(file.path(spatialOutDir,"RailR.tif"))
-  RdDensR<-raster(file.path(spatialOutDir,"RdDensR.tif"))
-  TransR<-raster(file.path(spatialOutDir,"TransR.tif"))
-  SeismicR<-raster(file.path(spatialOutDir,"SeismicR.tif"))
-  OilGasR<-raster(file.path(spatialOutDir,"OilGasR.tif"))
+  RailR<-raster(file.path(DataDir,"LandDisturbance/RailR.tif"))
+  RdDensR<-raster(file.path(DataDir,"LandDisturbance/RdDensR.tif"))
+  TransR<-raster(file.path(DataDir,"LandDisturbance/TransR.tif"))
+  SeismicR<-raster(file.path(DataDir,"LandDisturbance/SeismicR.tif"))
+  OilGasR<-raster(file.path(DataDir,"LandDisturbance/OilGasR.tif"))
 }  
 
 #Load Strata
@@ -161,17 +167,31 @@ GBPUr_Forest<-raster(file.path(StrataDir,"GBPUr_Forest.tif"))
     #######
   #Other possible layers - not currently used
   #GB CE summary data
+  GB_gdb <- list.files(file.path(BearsCEDir), pattern = ".gdb", full.names = TRUE)[1]
+  gb_list <- st_layers(GB_gdb)
+
   GB <- read_sf(GB_gdb, layer = "LU_SUMMARY_poly_v5_20160210")
   GB_lut <- data.frame(LANDSCAPE_UNIT_PROVID=GB$LANDSCAPE_UNIT_PROVID,LANDSCAPE_UNIT_NAME=GB$LANDSCAPE_UNIT_NAME)
+  
+  GBPU<-read_sf(GB_gdb, layer = "GBPU_BC_edits_v2_20150601")
+  saveRDS(GBPU, file = 'tmp/GBPU')
+  
   
   # Make a LU_summary raster
   GB_CEr <- fasterize(GB, ProvRast, field = 'LANDSCAPE_UNIT_PROVID')
 
-#Read in LU csv 
-LU_Summ_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/Bears/GBear_LU_Summary_scores_v5_20160823.csv", sep=""), sep=",", strip.white=TRUE, ))
+
+  #Read in LU csv 
+#LU_Summ_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/Bears/GBear_LU_Summary_scores_v5_20160823.csv", sep=""), sep=",", strip.white=TRUE, ))
 #Read in assessor based GBPU ranks
-Ranking_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/ProvGBPUs_NatServeMPSimplified.csv", sep=""), sep=",", strip.white=TRUE, ))
-Ranking_inSept <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/NS_GBPU_RANKS_MP_NEW_OCT_2018.csv", sep=""), sep=",", strip.white=TRUE, ))
+#Ranking_in <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/ProvGBPUs_NatServeMPSimplified.csv", sep=""), sep=",", strip.white=TRUE, ))
+#Ranking_inSept <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/NS_GBPU_RANKS_MP_NEW_OCT_2018.csv", sep=""), sep=",", strip.white=TRUE, ))
+
+#Read in assessor based GBPU ranks and updated population from most current GBPU assessment spreadsheet
+GBPop<- data.frame(read_xlsx(path=file.path(DataDir,paste('GBPU_Rank_25_June2019.xlsx',sep='')),sheet='Population'))
+Ranking_in <- data.frame(read_xlsx(path=file.path(DataDir,paste('GBPU_Rank_25_June2019.xlsx',sep='')),sheet='RankWorkSheet'))
+Trend <- data.frame(read_xlsx(path=file.path(DataDir,paste('GBPU_Rank_25_June2019.xlsx',sep='')),sheet='Trend'))
+
 #Read in calculated GBPU isolation tables
 Isolation_list <- import_list(file.path(DataDir,"Isolation/IsolationCalcTables.xlsx"))
 

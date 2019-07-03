@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-
 library(sf)
 library(dplyr)
 library(plyr)
@@ -36,7 +35,9 @@ StrataDir <- file.path('../GB_Data/out/Strata')
 HunterSpatialDir <- file.path('../HunterDensity/out/spatial')
 HumanLivestockSpatialDir <- file.path('../HumanLivestockDensity/out/spatial')
 MortSpatialDir <- file.path('../GB_Mortality/out/spatial')
+MortDataDir <- file.path('../GB_Mortality/out/data')
 GBspatialDir <- file.path('../GB_Data/out/spatial')
+BearsCEDir <- file.path('../GB_Data/data/BearsCE')
 
 dir.create(file.path(OutDir), showWarnings = FALSE)
 dir.create(file.path(dataOutDir), showWarnings = FALSE)
@@ -46,6 +47,3 @@ dir.create(file.path(figsOutDir), showWarnings = FALSE)
 dir.create(file.path(spatialOutDir), showWarnings = FALSE)
 dir.create(DataDir, showWarnings = FALSE)
 dir.create("tmp", showWarnings = FALSE)
-
-
-

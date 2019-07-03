@@ -124,7 +124,14 @@ if (!file.exists(file.path(spatialOutDir,"Transport_4all.tif"))) {
 
 # Biological Resource Use - Threat 5
 # CE Mortality overages
-BioUse_5.1a <- MortR
+BioUse_5.1a <- FemaleUnk_Report_pop %>%
+  mutate(GRIZZLY_BEAR_POP_UNIT_ID = GBPU) %>%
+  mutate(BioUse_5.1a = pc_Female_Mort_WMU) %>%
+  arrange(GRIZZLY_BEAR_POP_UNIT_ID) %>%
+  dplyr::select(GRIZZLY_BEAR_POP_UNIT_ID,BioUse_5.1a)
+
+saveRDS(BioUse_5.1a, file = (file.path(dataOutDir,'BioUse_5.1a')))
+
 BioUse_5.1b <- HuntDDensR
 BioUse_5.3 <- MidSeralR
 
@@ -137,32 +144,48 @@ HumanIntrusion_6 <- FrontCountryR
 ClimateChange_11 <-SalmonChangeR
 
 #Make a Threat brick for assessment
-ThreatBrick <- stack(Residential_1a, Residential_1b,Agriculture_2.1,Agriculture_2.3a,Agriculture_2.3b,Agriculture_2all,Transport_4.1,Transport_4.1L,Transport_4.2L,Transport_4all,Transport_4allL,BioUse_5.1a,BioUse_5.1b,BioUse_5.3,HumanIntrusion_6, ClimateChange_11)
+ThreatBrick <- stack(Residential_1a, Residential_1b,Agriculture_2.1,Agriculture_2.3a,Agriculture_2.3b,
+                     Transport_4.1,Transport_4.1L,Transport_4.2L,Transport_4all,Transport_4allL,
+                     BioUse_5.1b,BioUse_5.3,HumanIntrusion_6, ClimateChange_11)
 
-names(ThreatBrick) <- c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Agriculture_2all','Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11')
+names(ThreatBrick) <- c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11')
 
 Threat_file <- file.path("tmp/ThreatBrick")
 saveRDS(ThreatBrick, file = Threat_file)
 
-#Clean up ranking file
-Ranking_full <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/ProvGBPUs_NatServeMPSimplified.csv", sep=""), sep=",", strip.white=TRUE, ))
-saveRDS(Ranking_full, file=file.path(DataDir,'Ranking_full'))
-Ranking_fullSept <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/NS_GBPU_RANKS_MP_NEW_OCT_2018.csv", sep=""), sep=",", strip.white=TRUE, ))
-saveRDS(Ranking_fullSept, file=file.path(DataDir,'Ranking_fullSept'))
-Ranking<-data.frame(GBPU=Ranking_full$GBPU, GBPU_Name=Ranking_full$GBPU_Name,Residential=Ranking_full$Residential,Agriculture=Ranking_full$Agriculture, Energy=Ranking_full$Energy, Transportation=Ranking_full$Transportation, BioUse=Ranking_full$BioUse,HumanIntrusion=Ranking_full$HumanIntrusion,ClimateChange=Ranking_full$ClimateChange)
+#Clean up ranking file, assign Adults to 55% of reported population 
+ThreatCodeLUT <- data.frame(ThreatCode=c('A','B','C','CD','D'),
+                  ExpertOverallThreat=c('VeryHigh','High','Medium','MediumLow','Low'))
+ExpertRankLUT <-data.frame(NewRank=c(1,1.5,2,2.5,3,3.5,4,4.5,5),
+                           ExpertRank=c('M1','M1M2','M2','M2M3','M3','M3M4','M4','M4M5','M5'))
+  
+  
+Ranking <- 
+  Ranking_in %>%
+  left_join(GBPop, by='GBPU_Name') %>%
+  left_join(Trend, by='GBPU_Name') %>%
+  left_join(ThreatCodeLUT, by='ThreatCode') %>%
+  left_join(ExpertRankLUT, by='NewRank') %>%
+  dplyr::select(GBPU_Name, Region, Adults=PopnEst2019,Iso, Trend, ExpertRank, ExpertOverallThreat,
+                Residential, Agriculture, Energy, Transportation, BioUse, HumanIntrusion,
+                ClimateChange) %>%
+  mutate(Adults = round((Adults * 0.55), 0))
+                
 saveRDS(Ranking, file=file.path(DataDir,'Ranking'))
+
+
 
 #Merge Ranking_in isolation with calculated isolation for inspection
 Isolation_overal<-
-  data.frame(GBPU_Name=Ranking_in$GBPU_Name, Iso_code=Ranking_in$Iso_code) %>%
+  data.frame(GBPU_Name=Ranking_in$GBPU_Name, Iso_code=Ranking_in$IsoCode) %>%
   merge(Isolation_list[[1]], by.x='GBPU_Name', by.y='GBPU')
 
 Isolation_internal<-
-  data.frame(GBPU_Name=Ranking_in$GBPU_Name, Iso_code=Ranking_in$Iso_code) %>%
+  data.frame(GBPU_Name=Ranking_in$GBPU_Name, Iso_code=Ranking_in$IsoCode) %>%
   merge(Isolation_list[[2]], by.x='GBPU_Name', by.y='GBPU')
 
 Isolation_external<-
-  data.frame(GBPU_Name=Ranking_in$GBPU_Name, Iso_code=Ranking_in$Iso_code) %>%
+  data.frame(GBPU_Name=Ranking_in$GBPU_Name, Iso_code=Ranking_in$IsoCode) %>%
   merge(Isolation_list[[3]], by.x='GBPU_Name', by.y='GBPU')
 
 

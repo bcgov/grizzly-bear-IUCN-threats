@@ -12,9 +12,9 @@
 source("header.R")
 
 #Calculate %indicator area of total strata area for certain indicators
-IndsPCArea<-c("Area","Residential_1a","Agriculture_2.1","Agriculture_2.3a","Agriculture_2all","BioUse_5.1a","BioUse_5.3","HumanIntrusion_6")
+IndsPCArea<-c("Area","Residential_1a","Agriculture_2.1","Agriculture_2.3a","BioUse_5.3","HumanIntrusion_6")
 IndsPCLength<-c("Area","Transport_4.1L","Transport_4.2L","Transport_4allL")
-IndsCount<-c("Energy_3","Energy_3.1","Energy_3.2","Energy_3.3")
+IndsCount<-c("Energy_3","Energy_3.1","Energy_3.2","Energy_3.3","BioUse_5.1a")
 IndsDensity<-c("Area","Residential_1b","Agriculture_2.3b","BioUse_5.1b","ClimateChange_11")
 KmDensity<-c("Area","Transport_4.1","Transport_4all")
 
@@ -26,7 +26,9 @@ ThreatL<-list()
 # Loop through each Strata concatenate and generate a Strata list of data frames
 for (i in 1:num) {
   StratName<-StrataL[i]
-  ThreatZone <- data.frame(readRDS(file = (file.path(StrataOutDir,StratName))))
+  ThreatZone <- data.frame(readRDS(file = (file.path(StrataOutDir,StratName)))) %>%
+  #strip out extirpated
+    dplyr::filter(POPULATION_NAME != 'extirpated')
   
   # Area indicators expressed as % indicator of strata 
   GBlistA<-ThreatZone[ , (names(ThreatZone) %in% IndsPCArea)]
@@ -57,11 +59,16 @@ for (i in 1:num) {
   colnames(GBDKR)<-lapply(KmDensity, function(x) paste(x, 'Rank',sep=''))
   
   # Energy_3 indicators expressed as number in Strata
-  GBC<-readRDS(file = (file.path(DataDir,'Energy_3')))
+  GBC<-readRDS(file = (file.path(spatialOutDir,'Energy_3'))) %>%
+    #strip out extirpated
+    dplyr::filter(GRIZZLY_BEAR_POP_UNIT_ID < 1000)
+  
+  # BioUse_5.1a indicator is a per cent for GBPU
+  GBC2<-readRDS(file=(file.path(dataOutDir,'Biouse_5.1a')))
   
   ThreatZ<-
-    cbind(data.frame(ThreatZone[ , (names(ThreatZone) %in% Strata)], GBA, GBAR, GBL, GBLR, GBC, GBD, GBDR, GBDK, GBDKR)) %>%
-    dplyr::select(-GRIZZLY_BEAR_POP_UNIT_ID.1,-Area.1,-Area.2, -Area.3)
+    cbind(data.frame(ThreatZone[ , (names(ThreatZone) %in% Strata)], GBA, GBAR, GBL, GBLR, GBC, GBC2, GBD, GBDR, GBDK, GBDKR)) %>%
+    dplyr::select(-GRIZZLY_BEAR_POP_UNIT_ID.1,-GRIZZLY_BEAR_POP_UNIT_ID.2,-Area.1,-Area.2, -Area.3)
   
   #Save individual Strata
   ThreatZ_file <- file.path(dataOutDir,paste("ThreatZ_",StrataL[i], sep=""))
@@ -93,8 +100,6 @@ for (i in 1:num) {
                                      Agriculture_2.3aRank=ThreatLR[[StrataL[i]]]$Agriculture_2.3aRank,
                                      Agriculture_2.3b=ThreatLR[[StrataL[i]]]$Agriculture_2.3b,
                                      Agriculture_2.3bRank=ThreatLR[[StrataL[i]]]$Agriculture_2.3bRank,
-                                     Agriculture_2all=ThreatLR[[StrataL[i]]]$Agriculture_2all,
-                                     Agriculture_2allRank=ThreatLR[[StrataL[i]]]$Agriculture_2allRank,
                                      Agriculture=ThreatLR[[StrataL[i]]]$Agriculture,
                                      Energy_3.1=ThreatLR[[StrataL[i]]]$Energy_3.1,
                                      Energy_3.2=ThreatLR[[StrataL[i]]]$Energy_3.2,
@@ -111,7 +116,6 @@ for (i in 1:num) {
                                      Transport_4allRank=ThreatLR[[StrataL[i]]]$Transport_4allRank,
                                      Transportation=ThreatLR[[StrataL[i]]]$Transportation,
                                      BioUse_5.1a=ThreatLR[[StrataL[i]]]$BioUse_5.1a,
-                                     BioUse_5.1aRank=ThreatLR[[StrataL[i]]]$BioUse_5.1aRank,
                                      BioUse_5.1b=ThreatLR[[StrataL[i]]]$BioUse_5.1b,
                                      BioUse_5.1Rank=ThreatLR[[StrataL[i]]]$BioUse_5.1bRank,
                                      BioUse_5.3=ThreatLR[[StrataL[i]]]$BioUse_5.3,
@@ -142,8 +146,6 @@ ThreatI<-data.frame(GBPU_Name=ThreatLR[['GBPUr']]$POPULATION_NAME,
                     Agriculture_2.3aRank=ThreatLR[['GBPUr_LFormFlat']]$Agriculture_2.3aRank,
                     Agriculture_2.3b=ThreatLR[['GBPUr_LFormFlat']]$Agriculture_2.3b,
                     Agriculture_2.3bRank=ThreatLR[['GBPUr_LFormFlat']]$Agriculture_2.3bRank,
-                    Agriculture_2all=ThreatLR[['GBPUr_LFormFlat']]$Agriculture_2all,
-                    Agriculture_2allRank=ThreatLR[['GBPUr_LFormFlat']]$Agriculture_2allRank,
                     Agriculture=ThreatLR[['GBPUr']]$Agriculture,
                     Energy_3.1=ThreatLR[['GBPUr']]$Energy_3.1,
                     Energy_3.2=ThreatLR[['GBPUr']]$Energy_3.2,
@@ -159,8 +161,7 @@ ThreatI<-data.frame(GBPU_Name=ThreatLR[['GBPUr']]$POPULATION_NAME,
                     Transport_4allL=ThreatLR[['GBPUr_NonHab']]$Transport_4allL,
                     Transport_4allRank=ThreatLR[['GBPUr_NonHab']]$Transport_4allRank,
                     Transportation=ThreatLR[['GBPUr']]$Transportation,
-                    BioUse_5.1a=ThreatLR[['GBPUr_NonHab']]$BioUse_5.1a,
-                    BioUse_5.1aRank=ThreatLR[['GBPUr_NonHab']]$BioUse_5.1aRank,
+                    BioUse_5.1a=ThreatLR[['GBPUr']]$BioUse_5.1a,
                     BioUse_5.1b=ThreatLR[['GBPUr_NonHab']]$BioUse_5.1b,
                     BioUse_5.1bRank=ThreatLR[['GBPUr_NonHab']]$BioUse_5.1bRank,
                     BioUse_5.3=ThreatLR[['GBPUr_Forest']]$BioUse_5.3,
@@ -169,7 +170,8 @@ ThreatI<-data.frame(GBPU_Name=ThreatLR[['GBPUr']]$POPULATION_NAME,
                     HumanIntrusion_6=ThreatLR[['GBPUr_NonHab']]$HumanIntrusion_6,
                     HumanIntrusion_6Rank=ThreatLR[['GBPUr_NonHab']]$HumanIntrusion_6Rank,
                     HumanIntrusion=ThreatLR[['GBPUr']]$HumanIntrusion,
-                    ClimateChange_11=ThreatLR[['GBPUr_NonHab']]$ClimateChange_11,
+                    #Need to multiply by -1 to make it salmon decline
+                    ClimateChange_11=(ThreatLR[['GBPUr_NonHab']]$ClimateChange_11)*-1,
                     ClimateChange_11Rank=ThreatLR[['GBPUr_NonHab']]$ClimateChange_11Rank,
                     ClimateChange=ThreatLR[['GBPUr']]$ClimateChange)
 

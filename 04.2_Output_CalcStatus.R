@@ -12,32 +12,36 @@
 
 source("header.R")
 
-ThreatAVars <- c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Agriculture_2all','Energy_3.1','Energy_3.2','Energy_3.3','Energy_3all','Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11')
-ThreatNSVars <- c('Residential','Residential','Agriculture','Agriculture','Agriculture','Agriculture','Energy','Energy','Energy','Energy','Transportation','Transportation','Transportation','Transportation','Transportation','BioUse','BioUse','BioUse','HumanIntrusion','ClimateChange')
+ThreatAVars <- c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Energy_3.1','Energy_3.2','Energy_3.3','Energy_3all','Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11')
+ThreatNSVars <- c('Residential','Residential','Agriculture','Agriculture','Agriculture','Energy','Energy','Energy','Energy','Transportation','Transportation','Transportation','Transportation','Transportation','BioUse','BioUse','BioUse','HumanIntrusion','ClimateChange')
 
 #######
 # Using numerically derived benchmarks re-calculate the Threats for each GBPU
 Threat_O <- data.frame(read_excel(path=file.path(dataOutDir,paste('Threat_O.xls',sep=''))))
+#Ranking<-readRDS(file=file.path(DataDir,'Ranking'))
+#Ranking_full<-readRDS(file=file.path(DataDir,'Ranking_full'))
 Ranking<-readRDS(file=file.path(DataDir,'Ranking'))
-Ranking_full<-readRDS(file=file.path(DataDir,'Ranking_full'))
-Ranking_fullSept<-readRDS(file=file.path(DataDir,'Ranking_fullSept'))
 
 ThreatSummaryL<-data.frame(read_excel(path=file.path(dataOutDir,paste('ThreatCalcSummary.xls',sep=''))))
 
-Ranking<-data.frame(GBPU_Name=Ranking_fullSept$GBPU_Name,
-                    Adults=Ranking_fullSept$Adults, Iso=Ranking_fullSept$Iso, TrendAdj=Ranking_fullSept$TrendAdjNEW,OrigRanking=Ranking_fullSept$OrigRanking,
-                    Residential=Ranking_fullSept$Residential,Agriculture=Ranking_fullSept$Agriculture, Energy=Ranking_fullSept$Energy, 
-                    Transportation=Ranking_fullSept$Transportation, BioUse=Ranking_fullSept$BioUse,HumanIntrusion=Ranking_fullSept$HumanIntrusion,ClimateChange=Ranking_full$ClimateChange)
+#Ranking<-data.frame(GBPU_Name=Ranking_fullSept$GBPU_Name,
+#                    Adults=Ranking_fullSept$Adults, Iso=Ranking_fullSept$Iso, TrendAdj=Ranking_fullSept$TrendAdjNEW,OrigRanking=Ranking_fullSept$OrigRanking,
+#                    Residential=Ranking_fullSept$Residential,Agriculture=Ranking_fullSept$Agriculture, Energy=Ranking_fullSept$Energy, 
+#                    Transportation=Ranking_fullSept$Transportation, BioUse=Ranking_fullSept$BioUse,HumanIntrusion=Ranking_fullSept$HumanIntrusion,ClimateChange=Ranking_full$ClimateChange)
 
 Iso_LUT<-data.frame(IsoCode = c('D','C','B','A'),
-                    Iso = c('<25','25-66','66-90','>90'))
+                    Iso = c( '<25','25-66','66-90','>90'))
 
 #From Proctor
 IsoPopAdj_LUT<-data.frame(PopIso=c('AA','AB','AC','AD','BA','BB','BC','BD','CA','CB','CC','CD','DA','DB','DC','DD','EA','EB','EC','ED'),
                           PopIsoAdj=c(-4,-4,-4,-3,  -4,-1.5,-1,-0.5,  -4,-1.5,-1,0,  -3,-1,-0.5,0,  -2,-1,-0.5,0))
 
-Rank_LUT<-data.frame(Rank=c('1','1.5','2','2.5','3','3.5','4','4.5','5'),
+#Rank_LUT<-data.frame(Rank=c('1','1.5','2','2.5','3','3.5','4','4.5','5'),
+Rank_LUT<-data.frame(Rank=c(1,1.5,2,2.5,3,3.5,4,4.5,5),
                      RankCode=c('M1','M1M2','M2','M2M3','M3','M3M4','M4','M4M5','M5'))
+
+RankS_LUT<-data.frame(Rank=c(1,1.5,2,2.5,3,3.5,4,4.5,5),
+RankSCode=c('M1','M1','M2','M2','M3','M3','M4','M4','M5'))
 
 #Create a new table and populate the population codes, isolation codes, 
 #combined population-isolation code, and rank score code
@@ -51,12 +55,34 @@ Threat_2<-
   left_join(Iso_LUT, by='Iso') %>%
   mutate(PopIso = paste(PopCode, IsoCode, sep=''))  %>%
   left_join(IsoPopAdj_LUT, by='PopIso') %>%
-  mutate(Rank=as.character(
-    ifelse((5+PopIsoAdj+TrendAdj+ThreatAdj)<=0, 1, (5+PopIsoAdj+TrendAdj+ThreatAdj))
+  #mutate(Rankc=as.character(
+    mutate(Rankc=(
+      ifelse((5+PopIsoAdj+Trend+ThreatAdj)<=0, 1, (5+PopIsoAdj+Trend+ThreatAdj))
   )) %>%
+  # manually adjust the ranks of Yahk and South Selkirk due to meeting criteria - ie active recovery plan
+  mutate(Rank=ifelse(`GBPU_Name` %in% c('Yahk','South Selkirk'), Rankc+1, Rankc)) %>%
   left_join(Rank_LUT, by='Rank')  %>%
+  left_join(RankS_LUT, by='Rank')  %>%
   left_join(ThreatSummaryL, by='GBPU_Name')
+         
+# pull out desired columns
+#Threat_3<-Threat_2[,c(1,2,19,3,20,4,21:22,13:18,   23,24,5,  6,25,7,26,8,27,9,28,10,29,11,30,12,31)]
+#Threat_3<-Threat_2[,c(1,2,3,20,4,21,5,22:23,14:19,   24,25,6,  7,26,8,27,9,28,10,29,11,30,12,31,13,32)]
 
-Threat_3<-Threat_2[,c(1,2,19,3,20,4,21:22,13:18,   23,24,5,  6,25,7,26,8,27,9,28,10,29,11,30,12,31)]
+Threat_3 <- Threat_2 %>%
+  dplyr::select(GBPU_Name, Region, 
+       Adults, PopIso, Trend, ExpertRank, ExpertOverallThreat,
+       CalcRank=RankCode, CalcSRank=RankSCode, Rank_Number=Rank,preAdj_Rank_Number=Rankc,Threat_Class, 
+       Residential, ResidentialCalc,
+       Agriculture,AgricultureCalc, 
+       Energy,EnergyCalc,
+       Transportation,TransportationCalc,
+       BioUse,BioUseCalc, 
+       HumanIntrusion,HumanIntrusionCalc,
+       ClimateChange,ClimateChangeCalc
+       )
+
+#Overide the rank, srank and rank_Number for Yahk and South Selkirk
+  
 WriteXLS(Threat_3,file.path(dataOutDir,paste('Threat_Calc.xls',sep='')))
 

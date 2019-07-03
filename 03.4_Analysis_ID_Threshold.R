@@ -18,20 +18,22 @@ source("header.R")
 
 ############
 
-ThreatAVars <- c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Agriculture_2all','Energy_3.1','Energy_3.2','Energy_3.3','Energy_3all','Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11')
-ThreatNSVars <- c('Residential','Residential','Agriculture','Agriculture','Agriculture','Agriculture','Energy','Energy','Energy','Energy','Transportation','Transportation','Transportation','Transportation','Transportation','BioUse','BioUse','BioUse','HumanIntrusion','ClimateChange')
+ThreatAVars <- c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b','Energy_3.1','Energy_3.2','Energy_3.3','Energy_3all','Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11')
+ThreatNSVars <- c('Residential','Residential','Agriculture','Agriculture','Agriculture','Energy','Energy','Energy','Energy','Transportation','Transportation','Transportation','Transportation','Transportation','BioUse','BioUse','BioUse','HumanIntrusion','ClimateChange')
 nTvars<-length(ThreatAVars)
 
 #Read in compiled Threats from spreadsheet exported by 04_output_Integrate script
 ThreatI <- data.frame(read_excel(path=file.path(dataOutDir,paste('GBThreatsI.xls',sep=''))))
 
 #Function to calculate stats for each indicator
-
+#??????Done by rank? How does the work out to final calculation for unthresholded threats??????
+#Dropped rank by, Quant2=mean, Quant4=max
 ThreatThresholdFn <- function(DF, ThreatCat, ThreatValue) {
   DF %>% 
     mutate(TV = (DF[[ThreatValue]])) %>%
-    group_by(Rank=DF[[ThreatCat]]) %>% 
-    dplyr::summarise(Threat=ThreatValue, count=n(), Mean=mean(TV), SD=sd(TV), Max=max(TV), Quant1=quantile(TV)[2], Quant3=quantile(TV)[4])
+    #group_by(Rank=DF[[ThreatCat]]) %>% 
+    dplyr::summarise(Threat=ThreatValue, count=n(), Mean=mean(TV), SD=sd(TV), Max=max(TV), Quant1=quantile(TV)[2], 
+                     Quant3=quantile(TV)[4])
 }
 
 ThreatMaxFn <- function(DF, ThreatCat, ThreatValue) {
@@ -55,20 +57,21 @@ WriteXLS(ThreatThreshold, file.path(dataOutDir,paste('GBThreatThresholds.xls',se
 
 #Convert list of Threats into a data.frame and pull out the low and med thresholds for each threat
 Threat_DF<-ldply(ThreatThreshold,data.frame)
-ThreatMax_DF<-ldply(ThreatMax,data.frame)
+#ThreatMax_DF<-ldply(ThreatMax,data.frame)
 
-DF1a<-merge(Threat_DF[Threat_DF$Rank=='Low',],Threat_DF[Threat_DF$Rank=='Medium',], by='Threat', all=TRUE)
-DF1b<-merge(DF1a, Threat_DF[Threat_DF$Rank=='Unknown',], by='Threat', all=TRUE)
-DF1<-merge(DF1b, ThreatMax_DF, by='Threat', all.x=TRUE)#Rank.x is Low, Rank.y is Medium, Rank is Unknown
+#DF1a<-merge(Threat_DF[Threat_DF$Rank=='Low',],Threat_DF[Threat_DF$Rank=='Medium',], by='Threat', all=TRUE)
+#DF1b<-merge(DF1a, Threat_DF[Threat_DF$Rank=='Unknown',], by='Threat', all=TRUE)
+#DF1<-merge(DF1b, ThreatMax_DF, by='Threat', all.x=TRUE)#Rank.x is Low, Rank.y is Medium, Rank is Unknown
 
-
+DF1<-Threat_DF
 # clean up some of the scores
 # set medium (ie no medium scores) to max of all + 0.01 - it wont ever get flagged
-DF1$Quant1.y<-ifelse(is.na(DF1$Quant1.y), DF1$MaxAll+0.01, DF1$Quant1.y)
+#DF1$Quant1.y<-ifelse(is.na(DF1$Quant1.y), DF1$MaxAll+0.01, DF1$Quant1.y)
 
 # set low to 0.01 if 0 or NA - so not 0
-DF1$Quant1.x<-ifelse((DF1$Quant1.x ==0| is.na(DF1$Quant1.x) ), 0.01, DF1$Quant1.x)
-ThreatBenchI<-data.frame(Threat=DF1$Threat, LowIn=DF1$Quant1.x, MedIn=DF1$Quant1.y, UnknownIn=DF1$Quant1)
+DF1$Quant1<-ifelse((DF1$Quant1 ==0| is.na(DF1$Quant1) ), 0.01, DF1$Quant1)
+# create a data.frame with low set to Quant1 and Med and High set to max + 0.01 - it wont ever get flagged unless overridden
+ThreatBenchI<-data.frame(Threat=DF1$Threat, LowIn=DF1$Quant1, MedIn=DF1$Max+0.01, HighIn=DF1$Max+0.01)
 
 #Fix Threat 3 - it is a count and typically few resulting in a 0 - assign to 1
 ThreatBenchI$LowIn[ThreatBenchI$Threat=='Energy_3all']<-1
@@ -78,11 +81,18 @@ ThreatBenchI$LowIn[ThreatBenchI$Threat=='Energy_3all']<-1
 #Mortality update - flag if >50% of GBPU has mortality issues to temper the rating - check with Bear Team, flag 100% as medium
 #Climate change - set at 25% or more -ve change in salmon biomas then flagged
 CE_Bench<-data.frame(Threat=c('Residential_1a','Residential_1b','Agriculture_2.1','Agriculture_2.3a','Agriculture_2.3b',
-                              'Agriculture_2all','Energy_3.1','Energy_3.2','Energy_3.3','Energy_3all',
-                              'Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL','BioUse_5.1a',
-                              'BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11'),
-                     CE_BenchmarkL=c(0,0,0,0,0,0,0,0,0,0,0.6,0,0,0.6,0,50,1.508812,30,20,25),
-                     CE_BenchmarkM=c(0,0,0,0,0,0,0,0,0,0,1.2,0,0,1.2,0,0,0,0,0,0))
+                              'Energy_3.1','Energy_3.2','Energy_3.3','Energy_3all',
+                              'Transport_4.1','Transport_4.1L','Transport_4.2L','Transport_4all','Transport_4allL',
+                              'BioUse_5.1a','BioUse_5.1b','BioUse_5.3','HumanIntrusion_6','ClimateChange_11'),
+                     CE_BenchmarkL=c(0.3444,0.5,1.1133,0,0.2111,
+                                     0,0,0,0,
+                                     0.6,0,0,0.6,0,
+                                     1.33,2.0,30,20,25),
+                     CE_BenchmarkM=c(0,7,0,0,0,
+                                     0,0,0,0,
+                                     1.2,0,0,1.2,0,
+                                     2,0,0,0,0),
+                     CE_BenchmarkH=c(0,0,0,0,0,0,0,0,0,0,0,0,0,0, 3.33,0,0,0,0))
 
 ThreatBenchI<-left_join(ThreatBenchI,CE_Bench, by='Threat')
 #Modify ThreatBench and use CE_Benchmarks where they are available
@@ -91,11 +101,12 @@ ThreatBench<-
   ThreatBenchI %>% 
   mutate(Low = ifelse((ThreatBench$CE_BenchmarkL==0), ThreatBench$LowIn, ThreatBench$CE_BenchmarkL)) %>%
   mutate(Med = ifelse((ThreatBench$CE_BenchmarkM==0), ThreatBench$MedIn, ThreatBench$CE_BenchmarkM)) %>%
-  mutate(Unknown = ThreatBench$UnknownIn) %>%
-  dplyr::select(Threat,Low,Med,Unknown)
+  mutate(High = ifelse((ThreatBench$CE_BenchmarkH==0), ThreatBench$HighIn, ThreatBench$CE_BenchmarkH)) %>%
+  #mutate(Unknown = ThreatBench$UnknownIn) %>%
+  dplyr::select(Threat,Low,Med,High)
 
 #Set NAs to near 0
-ThreatBench$Unknown[is.na(ThreatBench$Unknown)]<-0
+#ThreatBench$Unknown[is.na(ThreatBench$Unknown)]<-0
 
 #CE Benchmarks Detail
 #Residential area - 1 - no CE equivalent

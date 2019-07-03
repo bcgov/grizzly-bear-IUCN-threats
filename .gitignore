@@ -39,3 +39,7 @@ internal.R
 /tmp*/
 *qgs*
 *doc*
+/Archive/
+04.6_Output_FTP.R
+04.5_Output_ThreatTables_archive.R
+04.1_output_ReCalcThreat_old.R
