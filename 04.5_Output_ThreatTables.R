@@ -24,6 +24,7 @@ GBPU <- readRDS(file = 'tmp/GBPU')
 
 ThreatCalc <- data.frame(read_excel(path=file.path(dataOutDir,paste('Threat_Calc.xls',sep=''))))
 ThreatCalc[is.na(ThreatCalc)] <- 'Negligible'
+
 #GBPU<-readOGR(dsn=file.path(GBspatialDir), layer='GBPU')
 
 #Generate graph of Threat Class count
@@ -139,7 +140,7 @@ RankMap1<-GBPU %>%
                                   paste(POPULATION_NAME,'*',sep=''),POPULATION_NAME)
 )
 
-RankMap1$POPULATION_NAME<-ifelse(RankMap1$POPULATION_NAME %in% c('Yahk','SouthSelkirk'), POPULATION_NAME)
+#RankMap1$POPULATION_NAME<-ifelse(RankMap1$POPULATION_NAME %in% c('Yahk','SouthSelkirk'), POPULATION_NAME)
 
 #Merge in the original values for each threat to output
 RankMap2<-merge(RankMap1, ThreatI, by.x='POPULATION_NAME', by.y='GBPU_Name')
@@ -157,6 +158,12 @@ RankTable <- RankMap2 %>%
                 ClimateChangeCalc, ClimateChange_11)
   
 WriteXLS(RankTable, file.path(dataOutDir,paste('RankTable.xls',sep='')))
+
+RankTableR <- RankMap2 %>%
+  dplyr::select(GBPU=POPULATION_NAME, Popn_2018=Adults, Rank_2012=STATUS,
+                Rank=CalcRank, Overal_Threat=Threat_Class)
+
+WriteXLS(RankTableR, file.path(dataOutDir,paste('RankTableR.xls',sep='')))
 
 #colnames(RankTable) <- c('GBPU','Pop 2018','Popn Iso','Overall Threat','Prev Status','Round 1 Rank','Revised Rank','RankNumber')
 #RankTable$GBPU <- factor(RankTable$GBPU)

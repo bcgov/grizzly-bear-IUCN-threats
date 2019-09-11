@@ -26,8 +26,9 @@ RankMap$RankCode_map<-factor(RankMap$Rank_Number)
 # Range coordinates - not used
 #mapRange1 <- c(range(st_coordinates(GBPU.AOI.spatial)[,1]),range(st_coordinates(GBPU.AOI.spatial)[,2]))
 
-plot_title<-"Grizzly Bear - Management Status"
-plot_legend<-"Management Status"
+plot_title<-"Grizzly Bear - Conservation Management Concern"
+plot_legend<-"Conservation\nConcern"
+
 # Prepare bcmaps data for plotting
 bc_neighbours <- bc_neighbours()
 
@@ -40,7 +41,7 @@ ggplot() +
   geom_sf(data = bc_bound(), col = "black", 
           alpha = 0, size = 0.5) +
   geom_sf(data = RankMap, aes(fill = RankCode_map)) +
-  scale_fill_brewer(palette="RdYlGn", direction =1) +
+  scale_fill_brewer(palette="RdYlGn", direction =1, labels = c('Extreme','High','High','Medium','Medium','Low','Low','Very Low')) +
   theme(legend.title = element_text(size=12, color = "black", face="bold"),
         legend.justification=c(1,0), 
         legend.position=c(0.95, 0.50),  
@@ -64,9 +65,6 @@ ggplot() +
     axis.ticks=element_blank(),
     panel.border = element_rect(colour = "black", fill=NA, size=2))
 dev.off()
-
-source("header.R")
-library(ggspatial)
 
 # Plot out final rank map
 # Read in GBPU and threat assessment data
@@ -81,8 +79,8 @@ RankMap$RankCode_Smap<-factor(floor(RankMap$Rank_Number))
 # Range coordinates - not used
 #mapRange1 <- c(range(st_coordinates(GBPU.AOI.spatial)[,1]),range(st_coordinates(GBPU.AOI.spatial)[,2]))
 
-plot_title<-"Grizzly Bear - Management Status"
-plot_legend<-"Management Status"
+plot_title<-"Grizzly Bear - Conservation Concern"
+plot_legend<-"Conservation\nConcern"
 # Prepare bcmaps data for plotting
 bc_neighbours <- bc_neighbours()
 
@@ -95,7 +93,7 @@ ggplot() +
   geom_sf(data = bc_bound(), col = "black", 
           alpha = 0, size = 0.5) +
   geom_sf(data = RankMap, aes(fill = RankCode_Smap)) +
-  scale_fill_brewer(palette="RdYlGn", direction =1) +
+  scale_fill_brewer(palette="RdYlGn", direction =1, labels = c('Extreme','High','Medium','Low','Very Low')) +
   theme(legend.title = element_text(size=12, color = "black", face="bold"),
         legend.justification=c(1,0), 
         legend.position=c(0.95, 0.50),  
@@ -119,6 +117,65 @@ ggplot() +
     axis.ticks=element_blank(),
     panel.border = element_rect(colour = "black", fill=NA, size=2))
 dev.off()
+
+#Plot out overall threat
+# Read in GBPU and threat assessment data
+GBPU <- readRDS(file = 'tmp/GBPU')
+ThreatCalc <- data.frame(read_excel(path=file.path(dataOutDir,paste('Threat_Calc.xls',sep=''))))
+
+#Merge to a sf map
+ThreatN <- data.frame(Threat_Class=c('VHigh','High','Medium','Low','Negligible'),
+                      Threat_Class_N=c(1,2,3,4,5))
+RankMap <- merge(GBPU, ThreatCalc, by.x='POPULATION_NAME', by.y='GBPU_Name') %>%
+            left_join(ThreatN, by='Threat_Class')
+
+#Make RankCode a factor
+RankMap$RankCode_Tmap<-factor(floor(RankMap$Threat_Class_N))
+#RankMap$RankCode_Smap<-factor(floor(RankMap$Threat_Class))
+# Range coordinates - not used
+#mapRange1 <- c(range(st_coordinates(GBPU.AOI.spatial)[,1]),range(st_coordinates(GBPU.AOI.spatial)[,2]))
+
+plot_title<-"Grizzly Bear - Overall Threat"
+plot_legend<-"Overall Threat"
+# Prepare bcmaps data for plotting
+bc_neighbours <- bc_neighbours()
+
+pdf(file=file.path(figsOutDir,"GB_Threat.pdf"))
+ggplot() +
+  geom_sf(data = bc_neighbours[bc_neighbours$iso_a2 == 'OC',], 
+          col = 'light blue', fill = 'light blue') +
+  geom_sf(data = bc_neighbours[bc_neighbours$postal == 'BC',], 
+          col = 'light grey', fill = 'light grey') +
+  geom_sf(data = bc_bound(), col = "black", 
+          alpha = 0, size = 0.5) +
+  geom_sf(data = RankMap, aes(fill = RankCode_Tmap)) +
+  scale_fill_brewer(palette="RdYlGn", direction =1,  labels = c('Very High','High','Medium','Low','Negligible')) +
+  theme(legend.title = element_text(size=12, color = "black", face="bold"),
+        legend.justification=c(1,0), 
+        legend.position=c(0.95, 0.50),  
+        legend.background = element_blank(),
+        legend.key = element_blank(), 
+        legend.text = element_text(colour = 'black', face = 'bold')) +   
+  labs(fill = plot_legend) +
+  labs(x=element_blank(), y = element_blank()) +
+  geom_sf(data=RankMap, col = "black", alpha = 0, size = 0.5)+
+  geom_sf_text(data=RankMap, size = 2, color = 'white', aes(label = POPULATION_NAME)) +
+  annotation_scale(location = "bl", width_hint = 0.25, 
+                   pad_x = unit(0.35, "in"), pad_y = unit(0.3, "in")) +
+  annotation_north_arrow(location = "bl", which_north = "true", 
+                         pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
+                         style = north_arrow_fancy_orienteering) +
+  theme(
+    panel.background = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line   = element_blank(),
+    axis.title=element_blank(),
+    axis.text=element_blank(),
+    axis.ticks=element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2))
+dev.off()
+
+
 
 ################
 # Plot out strata and threat maps -
