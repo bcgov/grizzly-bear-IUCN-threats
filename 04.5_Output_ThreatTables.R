@@ -134,16 +134,17 @@ export_formattable <- function(f, file, width = "100%", height = NULL,
 # Generate Table of results by Region
 RankMap1<-GBPU %>%
   merge(ThreatCalc, by.x='POPULATION_NAME', by.y='GBPU_Name') %>%
-  st_drop_geometry() %>%
-  #flag the 2 GBPUs that have manually adjusted ranks
-  mutate(POPULATION_NAME = ifelse(POPULATION_NAME %in% c('Yahk','South Selkirk'), 
-                                  paste(POPULATION_NAME,'*',sep=''),POPULATION_NAME)
-)
+  st_drop_geometry()
+
 
 #RankMap1$POPULATION_NAME<-ifelse(RankMap1$POPULATION_NAME %in% c('Yahk','SouthSelkirk'), POPULATION_NAME)
 
 #Merge in the original values for each threat to output
-RankMap2<-merge(RankMap1, ThreatI, by.x='POPULATION_NAME', by.y='GBPU_Name')
+RankMap2<-RankMap1 %>%
+  merge(ThreatI, by.x='POPULATION_NAME', by.y='GBPU_Name') %>%
+  #flag the 2 GBPUs that have manually adjusted ranks, these are set in 4.2_output_CalcStatus.R
+  mutate(POPULATION_NAME = ifelse(POPULATION_NAME %in% c('Yahk','South Selkirk'), 
+                                  paste(POPULATION_NAME,'*',sep=''),POPULATION_NAME))
 
 RankTable <- RankMap2 %>%
   dplyr::select(GBPU=POPULATION_NAME, Region, Popn_2018=Adults, PopIso, 
@@ -161,7 +162,7 @@ WriteXLS(RankTable, file.path(dataOutDir,paste('RankTable.xls',sep='')))
 
 RankTableR <- RankMap2 %>%
   dplyr::select(GBPU=POPULATION_NAME, Popn_2018=Adults, Rank_2012=STATUS,
-                Rank=CalcRank, Overal_Threat=Threat_Class)
+                Rank=CalcSRank, Overal_Threat=Threat_Class)
 
 WriteXLS(RankTableR, file.path(dataOutDir,paste('RankTableR.xls',sep='')))
 
