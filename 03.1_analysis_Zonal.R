@@ -15,7 +15,7 @@ DataDir <- 'data'
 StrataOutDir<-'out/data/Strata'
 StrataDir<-'../GB_Data/out/Strata'
 library(raster)
-setwd('/Users/Morgan/Dropbox (BVRC)/_dev/grizzly-bear-IUCN-threats')
+setwd('/Users/darkbabine/Dropbox (BVRC)/_dev/Biodiversity_CC')
 
 Threat_file <- file.path("tmp/ThreatBrick")
 ThreatBrick <- readRDS(file = Threat_file)

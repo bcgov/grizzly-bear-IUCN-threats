@@ -26,13 +26,13 @@ RankMap$RankCode_map<-factor(RankMap$Rank_Number)
 # Range coordinates - not used
 #mapRange1 <- c(range(st_coordinates(GBPU.AOI.spatial)[,1]),range(st_coordinates(GBPU.AOI.spatial)[,2]))
 
-plot_title<-"Grizzly Bear - Conservation Management Concern"
-plot_legend<-"Conservation\nConcern"
+plot_title<-"Grizzly Bear - Conservation Rank"
+plot_legend<-"Conservation\nRank"
 
 # Prepare bcmaps data for plotting
 bc_neighbours <- bc_neighbours()
 
-pdf(file=file.path(figsOutDir,"GB_Rank.pdf"))
+pdf(file=file.path(figsOutDir,"GB_Rank_2.pdf"))
 ggplot() +
   geom_sf(data = bc_neighbours[bc_neighbours$iso_a2 == 'OC',], 
           col = 'light blue', fill = 'light blue') +
@@ -79,12 +79,12 @@ RankMap$RankCode_Smap<-factor(floor(RankMap$Rank_Number))
 # Range coordinates - not used
 #mapRange1 <- c(range(st_coordinates(GBPU.AOI.spatial)[,1]),range(st_coordinates(GBPU.AOI.spatial)[,2]))
 
-plot_title<-"Grizzly Bear - Conservation Concern"
-plot_legend<-"Conservation\nConcern"
+plot_title<-"Grizzly Bear - Conservation Rank"
+plot_legend<-"Conservation\nRank"
 # Prepare bcmaps data for plotting
 bc_neighbours <- bc_neighbours()
 
-pdf(file=file.path(figsOutDir,"GB_SRank.pdf"))
+pdf(file=file.path(figsOutDir,"GB_SRank_2.pdf"))
 ggplot() +
   geom_sf(data = bc_neighbours[bc_neighbours$iso_a2 == 'OC',], 
           col = 'light blue', fill = 'light blue') +
@@ -108,6 +108,43 @@ ggplot() +
   annotation_north_arrow(location = "bl", which_north = "true", 
                          pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
                          style = north_arrow_fancy_orienteering) +
+  theme(
+    panel.background = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line   = element_blank(),
+    axis.title=element_blank(),
+    axis.text=element_blank(),
+    axis.ticks=element_blank(),
+    panel.border = element_rect(colour = "black", fill=NA, size=2))
+dev.off()
+
+png(file=file.path(figsOutDir,"GB_SRank_2.png"), units='mm', res = 1200)
+ggplot() +
+  geom_sf(data = bc_neighbours[bc_neighbours$iso_a2 == 'OC',], 
+          col = 'light blue', fill = 'light blue') +
+  geom_sf(data = bc_neighbours[bc_neighbours$postal == 'BC',], 
+          col = 'light grey', fill = 'light grey') +
+  geom_sf(data = bc_bound(), col = "black", 
+          alpha = 0, size = 0.5) +
+  geom_sf(data = RankMap, aes(fill = RankCode_Smap)) +
+  scale_fill_brewer(palette="RdYlGn", direction =1, labels = c('Extreme','High','Medium','Low','Very Low')) +
+  theme(legend.title = element_text(size=36, color = "black", face="bold"),
+        #theme(legend.title = element_text(size=12, color = "black", face="bold"),
+        legend.justification=c(1,0), 
+        legend.position=c(0.95, 0.50),  
+        legend.background = element_blank(),
+        legend.text=element_text(size=36),
+        legend.key = element_blank()) + 
+  labs(fill = plot_legend) +
+  labs(x=element_blank(), y = element_blank()) +
+  geom_sf(data = RankMap, col = "black", alpha = 0, size = 0.5)+
+  geom_sf_text(data=RankMap, size = 2, color = 'black', aes(label = POPULATION_NAME)) +
+  annotation_scale(location = "bl", width_hint = 0.25, 
+                   pad_x = unit(1.35, "in"), pad_y = unit(1.3, "in")) +
+  annotation_north_arrow(location = "bl", which_north = "true", 
+                         pad_x = unit(1.75, "in"), pad_y = unit(1.5, "in"),
+                         style = north_arrow_fancy_orienteering,
+                         height=unit(2, "in"), width = unit(1, "in")) +
   theme(
     panel.background = element_blank(),
     panel.grid.minor = element_blank(),
