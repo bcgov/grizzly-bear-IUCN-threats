@@ -77,7 +77,7 @@ TTable<-  bind_rows(ThreatLevels)
 TTable$ThreatLevel <- factor(TTable$ThreatLevel, levels=c("VHigh", "High", "Medium", "Low", "Negligible"))
 TTable$ThreatType <- factor(TTable$ThreatType, levels=rev(Threats))
 
-pdf(file=file.path(figsOutDir,"GB_ThreatClassCount.pdf"))
+pdf(file=file.path(figsOutDir,"GB_ThreatClassCount2.pdf"))
 ggplot(data=TTable) +
   geom_bar(aes(x = factor(ThreatType), fill = ThreatLevel), 
            position = position_stack(reverse = TRUE), width = 0.75) +
@@ -90,8 +90,12 @@ ggplot(data=TTable) +
   scale_y_continuous(breaks = c(0,10,20,30,40,50,55)) +
   xlab("Threat") + ylab("Number of Grizzly Bear Population Units") +
   #ggtitle("Threat Impact to Grizzly Bear Population Units") +
-  geom_text(stat = 'count', aes(x=factor(ThreatType),#fill = factor(ThreatLevel),
-           label = stat(count)), position=position_stack(reverse=TRUE,0.5),size=7) +
+  #geom_text(stat = 'count', aes(x=factor(ThreatType),#fill = factor(ThreatLevel),
+   #        label = stat(count)), position=position_stack(reverse=TRUE,0.5),size=7) +
+  #geom_text(aes(label='stat(count)'), stat='count', position='fill') +
+  #geom_text(position = "stack", 
+#            aes(x = factor(ThreatType), y = stat(count), 
+#            ymax = stat(count), label = stat(count), hjust = 0.5)) +
   theme(axis.title = element_text(size = 20)) +
   theme(axis.text = element_text(size = 15)) +
   theme(legend.text=element_text(size=15)) +
@@ -147,7 +151,7 @@ RankMap2<-RankMap1 %>%
                                   paste(POPULATION_NAME,'*',sep=''),POPULATION_NAME))
 
 RankTable <- RankMap2 %>%
-  dplyr::select(GBPU=POPULATION_NAME, Region, Popn_2018=Adults, PopIso, 
+  dplyr::select(GBPU=POPULATION_NAME, Region, Female_Popn_2018=Adults, PopIso, 
                 CalcRank, Rank_Number, Overal_Threat=Threat_Class, 
                 ExpertRank, ExpertOverallThreat,
                 ResidentialCalc,Residential_1a,Residential_1b,
@@ -161,12 +165,12 @@ RankTable <- RankMap2 %>%
 WriteXLS(RankTable, file.path(dataOutDir,paste('RankTable.xls',sep='')))
 
 RankTableR <- RankMap2 %>%
-  dplyr::select(GBPU=POPULATION_NAME, Popn_2018=Adults, Rank_2012=STATUS,
+  dplyr::select(GBPU=POPULATION_NAME, Female_Popn_2018=Adults, Rank_2012=STATUS,
                 Rank=CalcSRank, Overal_Threat=Threat_Class)
 
 WriteXLS(RankTableR, file.path(dataOutDir,paste('RankTableR.xls',sep='')))
 
-#colnames(RankTable) <- c('GBPU','Pop 2018','Popn Iso','Overall Threat','Prev Status','Round 1 Rank','Revised Rank','RankNumber')
+#colnames(RankTable) <- c('GBPU','Female Pop 2018','Popn Iso','Overall Threat','Prev Status','Round 1 Rank','Revised Rank','RankNumber')
 #RankTable$GBPU <- factor(RankTable$GBPU)
 
 df.list<-list(RankTable)
@@ -181,7 +185,7 @@ for (j in 1:npages) {
     'GBPU'= formatter("span", style =
             ~ style(color = ifelse(Rank_Number > 3, "green", "red"))),
    # formattable::area(col = c('GBPU')) ~ color_tile = ifelse(Rank_Number > 3, "green", "red"),
-    formattable::area(col = c('Popn_2018')) ~ normalize_bar("pink", 0.1),
+    formattable::area(col = c('Female Popn_2018')) ~ normalize_bar("pink", 0.1),
     'PopnIso','Overall_Threat',
     'Prev_Status'= formatter("span", style =
             ~ style(color = ifelse(`Prev_Status` %in% c('Viable'), "green", "red"))),
@@ -206,7 +210,7 @@ for (j in 1:npages) {
 ResTable <- RankMap1 %>%
   dplyr::select(POPULATION_NAME, Adults, PopIso, STATUS, 
                 ExpertRank, ExpertOverallThreat, CalcRank, Threat_Class, Rank_Number)
-colnames(ResTable) <- c('GBPU','Pop 2018','Popn Iso','2012 Status',
+colnames(ResTable) <- c('GBPU','Female Pop 2018','Popn Iso','2012 Status',
                         'Expert Rank','Expert Threat', 'Calculated Rank','Calculated Threat','Rank_Number')
 #RankTable$GBPU <- factor(RankTable$GBPU)]
 
@@ -222,7 +226,7 @@ for (j in 1:npages) {
       'GBPU'= formatter("span", style =
        ~ style(color = ifelse(Rank_Number > 3, "green", "red"))),
        # formattable::area(col = c('GBPU')) ~ color_tile = ifelse(RankNumber > 3, "green", "red"),
-       formattable::area(col = c('Pop 2018')) ~ normalize_bar("pink", 0.1),
+       formattable::area(col = c('Female Pop 2018')) ~ normalize_bar("pink", 0.1),
        'Popn Iso','Overall Threat',
        '2012 Status'= formatter("span", style =
        ~ style(color = ifelse(`2012 Status` %in% c('Viable'), "green", "red"))),
@@ -246,14 +250,14 @@ sortRankMap<-RankMap1[order(RankMap1$Rank_Number),]
 df1 <- sortRankMap[1:28,] %>%
   dplyr::select(POPULATION_NAME, Adults, Trend, PopIso, STATUS, 
                 Threat_Class, CalcRank, CalcSRank,Rank_Number)
-colnames(df1) <- c('GBPU','Pop 2018','Trend','Popn Iso','2012 Status',
+colnames(df1) <- c('GBPU','Female Pop 2018','Trend','Popn Iso','2012 Status',
                    'Overall Threat','Compound Rank','Single Rank','Rank_Number')
 #df1$GBPU <- factor(df1$GBPU)
 
 df2 <- sortRankMap[29:55,] %>%
   dplyr::select(POPULATION_NAME, Adults, Trend, PopIso, STATUS, 
                 Threat_Class, CalcRank, CalcSRank, Rank_Number)
-colnames(df2) <- c('GBPU','Pop 2018','Trend','Popn Iso','2012 Status',
+colnames(df2) <- c('GBPU','Female Pop 2018','Trend','Popn Iso','2012 Status',
                    'Overall Threat','Compound Rank','Single Rank','Rank_Number')
 #df2$GBPU <- factor(df2$GBPU)
 
@@ -269,7 +273,7 @@ for (j in 1:npages) {
   DT<-formattable(df[order(df$Rank_Number),], list(Rank_Number =FALSE,
       'GBPU'= formatter("span", style =
        ~ style(color = ifelse(Rank_Number > 3, "green", "red"))),
-       formattable::area(col = c('Pop 2018')) ~ normalize_bar("pink", 0.1),
+       formattable::area(col = c('Female Pop 2018')) ~ normalize_bar("pink", 0.1),
        'Trend','Popn Iso',
        '2012 Status'= formatter("span", style =
         ~ style(color = ifelse(`2012 Status` %in% c('Viable'), "green", "red"))),
