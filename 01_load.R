@@ -176,6 +176,10 @@ GBPUr_Forest<-raster(file.path(StrataDir,"GBPUr_Forest.tif"))
   GBPU<-read_sf(GB_gdb, layer = "GBPU_BC_edits_v2_20150601")
   saveRDS(GBPU, file = 'tmp/GBPU')
   
+  GBPU_LEH_gdb<-list.files(file.path('../GB_Data/data/Population/Bear_Density_2018'),pattern=".gdb",full.names=TRUE)[1]
+  GBPU_LEH_list <-st_layers(GBPU_LEH_gdb)
+  GBPU_LEH <- read_sf(GBPU_LEH_gdb, layer='GBPU_MU_LEH_2015_2018_bear_density_DRAFT')
+  saveRDS(GBPU_LEH, file = 'tmp/GBPU_LEH')
   
   # Make a LU_summary raster
   GB_CEr <- fasterize(GB, ProvRast, field = 'LANDSCAPE_UNIT_PROVID')
@@ -188,9 +192,17 @@ GBPUr_Forest<-raster(file.path(StrataDir,"GBPUr_Forest.tif"))
 #Ranking_inSept <- data.frame(read.csv(header=TRUE, file=paste(DataDir, "/NS_GBPU_RANKS_MP_NEW_OCT_2018.csv", sep=""), sep=",", strip.white=TRUE, ))
 
 #Read in assessor based GBPU ranks and updated population from most current GBPU assessment spreadsheet
-GBPop<- data.frame(read_xlsx(path=file.path(DataDir,paste('GBPU_Rank_25_June2019.xlsx',sep='')),sheet='Population'))
+#GBPop<- data.frame(read_xlsx(path=file.path(DataDir,paste('GBPU_Rank_25_June2019.xlsx',sep='')),sheet='Population'))
+GBPop<- data.frame(read_xls(path=file.path(GBdataOutDir,'GBPUpop.xls'))) %>%
+  mutate(GBPU_Name=POPULATION_NAME) %>%
+  mutate(PopnEst2018=pop2018)
+
 Ranking_in <- data.frame(read_xlsx(path=file.path(DataDir,paste('GBPU_Rank_25_June2019.xlsx',sep='')),sheet='RankWorkSheet'))
 Trend <- data.frame(read_xlsx(path=file.path(DataDir,paste('GBPU_Rank_25_June2019.xlsx',sep='')),sheet='Trend'))
+
+Region_LUT <- data.frame(read_xlsx(path=file.path(DataDir,paste('GBPU_Rank_25_June2019.xlsx',sep='')),sheet='Population')) %>%
+  dplyr::select(GBPU_Name,Region)
+saveRDS(Region_LUT, file = 'tmp/Region_LUT')
 
 #Read in calculated GBPU isolation tables
 Isolation_list <- import_list(file.path(DataDir,"Isolation/IsolationCalcTables.xlsx"))

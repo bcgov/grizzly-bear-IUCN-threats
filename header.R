@@ -37,6 +37,8 @@ HumanLivestockSpatialDir <- file.path('../HumanLivestockDensity/out/spatial')
 MortSpatialDir <- file.path('../GB_Mortality/out/spatial')
 MortDataDir <- file.path('../GB_Mortality/out/data')
 GBspatialDir <- file.path('../GB_Data/out/spatial')
+GBRdDir <- file.path('../GB_Data/out/spatial')
+GBdataOutDir <- file.path('../GB_Data/out/data')
 BearsCEDir <- file.path('../GB_Data/data/BearsCE')
 
 dir.create(file.path(OutDir), showWarnings = FALSE)

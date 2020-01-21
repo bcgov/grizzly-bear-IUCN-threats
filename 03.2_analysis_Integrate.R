@@ -78,7 +78,7 @@ for (i in 1:num) {
 }
 
 #Merge in the Ranking info into each strata file
-Mergefunc <- function(x,y){merge(x, y, by.x=names(x)[2], by.y=names(y)[2])}
+Mergefunc <- function(x,y){merge(x, y, by.x=names(x)[2], by.y=names(y)[1])}
 Ranking<-readRDS(file=file.path(DataDir,'Ranking'))
 
 ThreatLR<-lapply(ThreatL, Mergefunc, Ranking)

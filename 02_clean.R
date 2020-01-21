@@ -166,7 +166,8 @@ Ranking <-
   left_join(Trend, by='GBPU_Name') %>%
   left_join(ThreatCodeLUT, by='ThreatCode') %>%
   left_join(ExpertRankLUT, by='NewRank') %>%
-  dplyr::select(GBPU_Name, Region, Adults=PopnEst2019,Iso, Trend, ExpertRank, ExpertOverallThreat,
+  left_join(Region_LUT, by='GBPU_Name') %>%
+  dplyr::select(GBPU_Name, Region, Adults=PopnEst2018,Iso, Trend, ExpertRank, ExpertOverallThreat,
                 Residential, Agriculture, Energy, Transportation, BioUse, HumanIntrusion,
                 ClimateChange) %>%
   mutate(Adults = round((Adults * 0.55), 0))
