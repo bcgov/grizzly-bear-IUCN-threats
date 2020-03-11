@@ -47,6 +47,8 @@ saveRDS(BTM_Brick, file = BTM_file)
 # from GB_Data repo: https://github.com/bcgov/GB_Data
 #Security Areas
 SecureR<-raster(file.path(GBspatialDir,"SecureR.tif"))
+#SecureZ<-zonal(SecureR,GBPUr_NonHab,'sum', na.rm=TRUE)
+
 
 #Human access
 FrontCountryR<-raster(file.path(GBspatialDir,"FrontCountryR.tif"))

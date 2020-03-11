@@ -81,7 +81,9 @@ pdf(file=file.path(figsOutDir,"GB_ThreatClassCount2.pdf"))
 ggplot(data=TTable) +
   geom_bar(aes(x = factor(ThreatType), fill = ThreatLevel), 
            position = position_stack(reverse = TRUE), width = 0.75) +
-    scale_fill_brewer(palette="RdYlGn", direction =1) +
+  #scale_fill_brewer(palette="RdYlGn", direction =1) +
+  #manually set palette so has same colours as other figures - given that no vhigh in this case
+  scale_fill_manual(values=brewer.pal(5, 'RdYlGn')[2:5]) +
   labs(fill = 'Threat Level') +
   scale_x_discrete(limit = rev(Threats),
                    labels = rev(c("Residential","Agriculture","Energy",
